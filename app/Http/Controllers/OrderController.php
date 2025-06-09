@@ -13,7 +13,10 @@ class OrderController extends Controller
      */
     public function index()
     {
-        //
+        $orders = Order::all();
+        return Inertia::render('orders/index', [
+            'orders' => $orders,
+        ]);
     }
 
     /**
@@ -21,7 +24,7 @@ class OrderController extends Controller
      */
     public function create()
     {
-        //
+        return Inertia::render('orders/create');
     }
 
     /**
@@ -29,7 +32,22 @@ class OrderController extends Controller
      */
     public function store(Request $request)
     {
-        //
+       $validated = $request->validate([
+            'grand_total' => 'required|numeric',
+            'payment_method' => 'required|string|max:255',
+            'payment_status' => 'required|string|max:255',
+            'status' => 'required|in:new,processing,shipped,delivered,canceled',
+            'currency' => 'required|string|max:10',
+            'shipping_amount' => 'nullable|numeric',
+            'shipping_method' => 'nullable|string|max:255',
+            'notes' => 'nullable|string',
+        ]);
+
+        $validated['user_id'] = $request->user()->id;
+
+        Order::create($validated);
+
+        return redirect()->route('orders.index');
     }
 
     /**
