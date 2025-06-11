@@ -2,8 +2,6 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { PlaceholderPattern } from '@/components/ui/placeholder-pattern';
-import { Table, TableBody, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
 import { Head, Link, useForm } from '@inertiajs/react';
@@ -12,25 +10,24 @@ import React, { useRef, useState } from 'react';
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
-        title: 'Create Categories',
-        href: '/create/categories',
+        title: 'Create Brand',
+        href: '/brands/create',
     },
 ];
 
-export default function Dashboard() {
+export default function CreateBrand() {
     const { data, setData, post } = useForm<{
-    name: string;
-    slug: string;
-    image: File | null;
-    is_active: boolean;
-}>({
-    name: '',
-    slug: '',
-    image: null,
-    is_active: true,
-});
-    const [name, setName] = useState('');
-    const [slug, setSlug] = useState('');
+        name: string;
+        slug: string;
+        image: File | null;
+        is_active: boolean;
+    }>({
+        name: '',
+        slug: '',
+        image: null,
+        is_active: true,
+    });
+
     const [imagePreview, setImagePreview] = useState<string | null>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -41,12 +38,11 @@ export default function Dashboard() {
             .replace(/[^\w-]+/g, '');
     }
 
-
     function handleImageChange(e: React.ChangeEvent<HTMLInputElement>) {
         const file = e.target.files?.[0];
         if (file) {
             setImagePreview(URL.createObjectURL(file));
-            setData('image', file); // <-- Add this line
+            setData('image', file);
         }
     }
 
@@ -55,49 +51,46 @@ export default function Dashboard() {
         const file = e.dataTransfer.files?.[0];
         if (file) {
             setImagePreview(URL.createObjectURL(file));
-            setData('image', file); // <-- Add this line
+            setData('image', file);
             if (fileInputRef.current) {
-                // Set the file input's files property (optional, for form submission)
                 const dataTransfer = new DataTransfer();
                 dataTransfer.items.add(file);
                 fileInputRef.current.files = dataTransfer.files;
             }
         }
     }
-   
-   
+
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
-            <Head title="Create Categories" />
+            <Head title="Create Brand" />
             <div className="flex h-full flex-1 flex-col gap-4 rounded-xl p-4 overflow-x-auto">
                 <div className='rounded border p-6 shadow-xl'>
                     <div className='mb-5 flex items-center justify-between'>
-                        <div className="text-xl text-slate-600">Create Category</div>
-                     <Link href="/categories">
-                        <Button variant="outline" className="aspect-square max-sm:p-0 cursor-pointer bg-blue-600 hover:bg-blue-700 text-white">
-                            Back To Category
-                        </Button>
-                    </Link>
+                        <div className="text-xl text-slate-600">Create Brand</div>
+                        <Link href="/brands">
+                            <Button variant="outline" className="aspect-square max-sm:p-0 cursor-pointer bg-blue-600 hover:bg-blue-700 text-white">
+                                Back To Brands
+                            </Button>
+                        </Link>
                     </div>
-
                     <Card>
                         <CardContent>
-                            <form   onSubmit={e => {
+                            <form onSubmit={e => {
                                 e.preventDefault();
-                                post(route('categories.store'), {
-                                forceFormData: true,
-                                onSuccess: () => {
-                                    // Optionally reset the form or show a message
-                                }
+                                post(route('brands.store'), {
+                                    forceFormData: true,
+                                    onSuccess: () => {
+                                        // Optionally reset the form or show a message
+                                    }
                                 });
                             }}>
-                              <div className='grid grid-cols-2 gap-4'>
-                                     <div className='col-span-2 md:col-span-1'>
-                                       <Label htmlFor="name">Name</Label>
+                                <div className='grid grid-cols-2 gap-4'>
+                                    <div className='col-span-2 md:col-span-1'>
+                                        <Label htmlFor="name">Name</Label>
                                         <Input
                                             type='text'
                                             id='name'
-                                            placeholder='Category name'
+                                            placeholder='Brand name'
                                             value={data.name}
                                             onChange={e => {
                                                 setData('name', e.target.value);
@@ -106,16 +99,16 @@ export default function Dashboard() {
                                         />
                                     </div>
                                     <div className='col-span-2 md:col-span-1'>
-                                       <Label htmlFor="slug">Slug</Label>
+                                        <Label htmlFor="slug">Slug</Label>
                                         <Input
                                             type='text'
                                             id='slug'
-                                            placeholder='category-slug'
+                                            placeholder='brand-slug'
                                             value={data.slug}
                                             disabled
                                         />
                                     </div>
-                                     <div className='col-span-2 md:col-span-1'>
+                                    <div className='col-span-2 md:col-span-1'>
                                         <Label htmlFor="image">Image</Label>
                                         <div
                                             className="border-2 border-dashed rounded p-4 flex flex-col items-center justify-center cursor-pointer hover:border-blue-400 transition"
@@ -140,12 +133,18 @@ export default function Dashboard() {
                                         </div>
                                     </div>
                                     <div className='col-span-2 md:col-span-1 flex items-center gap-2 mt-6'>
-                                        <Input type='checkbox' id='is_active' className="w-4 h-4" defaultChecked />
+                                        <Input
+                                            type='checkbox'
+                                            id='is_active'
+                                            className="w-4 h-4"
+                                            checked={data.is_active}
+                                            onChange={e => setData('is_active', e.target.checked)}
+                                        />
                                         <Label htmlFor="is_active" className="mb-0">Active</Label>
                                     </div>
                                     <div className='col-span-2 mt-4'>
                                         <Button type="submit" className="cursor-pointer bg-blue-600 hover:bg-blue-700 text-white w-full">
-                                            Create Category
+                                            Create Brand
                                         </Button>
                                     </div>
                                 </div>
@@ -153,7 +152,7 @@ export default function Dashboard() {
                         </CardContent>
                     </Card>
                 </div>
-           </div>
+            </div>
         </AppLayout>
     );
 }
