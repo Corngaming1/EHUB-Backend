@@ -30,7 +30,7 @@ export default function CreateProduct({ categories = [], brands = [] }: CreatePr
     price: number | '';
     category_id: number | '';
     brand_id: number | '';
-    image: File | null;
+    images: File[]; // changed from image: File | null
     in_stock: boolean;
     is_active: boolean;
     is_featured: boolean;
@@ -42,14 +42,14 @@ export default function CreateProduct({ categories = [], brands = [] }: CreatePr
     price: '',
     category_id: '',
     brand_id: '',
-    image: null,
+    images: [], // changed from image: null
     in_stock: true,
     is_active: true,
     is_featured: false,
     on_sale: false,
   });
 
-  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [imagePreviews, setImagePreviews] = useState<string[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   function slugify(text: string) {
@@ -60,43 +60,36 @@ export default function CreateProduct({ categories = [], brands = [] }: CreatePr
   }
 
   function handleImageChange(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    if (file) {
-      if (imagePreview) {
-        URL.revokeObjectURL(imagePreview);
-      }
-      const previewUrl = URL.createObjectURL(file);
-      setImagePreview(previewUrl);
-      setData('image', file);
-    }
+    const files = Array.from(e.target.files ?? []);
+    setData('images', files);
+
+    // Clean up old previews
+    imagePreviews.forEach(url => URL.revokeObjectURL(url));
+    const previews = files.map(file => URL.createObjectURL(file));
+    setImagePreviews(previews);
   }
 
   function handleDrop(e: React.DragEvent<HTMLDivElement>) {
     e.preventDefault();
-    const file = e.dataTransfer.files?.[0];
-    if (file) {
-      if (imagePreview) {
-        URL.revokeObjectURL(imagePreview);
-      }
-      const previewUrl = URL.createObjectURL(file);
-      setImagePreview(previewUrl);
-      setData('image', file);
+    const files = Array.from(e.dataTransfer.files ?? []);
+    setData('images', files);
 
-      if (fileInputRef.current) {
-        const dataTransfer = new DataTransfer();
-        dataTransfer.items.add(file);
-        fileInputRef.current.files = dataTransfer.files;
-      }
+    imagePreviews.forEach(url => URL.revokeObjectURL(url));
+    const previews = files.map(file => URL.createObjectURL(file));
+    setImagePreviews(previews);
+
+    if (fileInputRef.current) {
+      const dataTransfer = new DataTransfer();
+      files.forEach(file => dataTransfer.items.add(file));
+      fileInputRef.current.files = dataTransfer.files;
     }
   }
 
   useEffect(() => {
     return () => {
-      if (imagePreview) {
-        URL.revokeObjectURL(imagePreview);
-      }
+      imagePreviews.forEach(url => URL.revokeObjectURL(url));
     };
-  }, [imagePreview]);
+  }, [imagePreviews]);
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -173,15 +166,15 @@ export default function CreateProduct({ categories = [], brands = [] }: CreatePr
 
                   <div className="col-span-2 md:col-span-1">
                     <Label htmlFor="price">Price</Label>
-                   <Input
-  type="number"
-  id="price"
-  placeholder="Price"
-  value={data.price}
-  onChange={e => setData('price', e.target.value === '' ? '' : Number(e.target.value))}
-  required
-  step="1.0"
-/>
+                    <Input
+                      type="number"
+                      id="price"
+                      placeholder="Price"
+                      value={data.price}
+                      onChange={e => setData('price', e.target.value === '' ? '' : Number(e.target.value))}
+                      required
+                      step="1.0"
+                    />
                     {errors.price && <p className="text-red-600 mt-1">{errors.price}</p>}
                   </div>
 
@@ -220,29 +213,34 @@ export default function CreateProduct({ categories = [], brands = [] }: CreatePr
                   </div>
 
                   <div className="col-span-2 md:col-span-1">
-                    <Label htmlFor="image">Image</Label>
+                    <Label htmlFor="images">Images</Label>
                     <div
                       className="border-2 border-dashed rounded p-4 flex flex-col items-center justify-center cursor-pointer hover:border-blue-400 transition"
                       onClick={() => fileInputRef.current?.click()}
                       onDrop={handleDrop}
-                      onDragOver={(e) => e.preventDefault()}
+                      onDragOver={e => e.preventDefault()}
                     >
-                      {imagePreview ? (
-                        <img src={imagePreview} alt="Preview" className="max-h-32 mb-2" />
+                      {imagePreviews.length > 0 ? (
+                        <div className="flex flex-wrap gap-2">
+                          {imagePreviews.map((src, idx) => (
+                            <img key={idx} src={src} alt={`Preview ${idx + 1}`} className="max-h-32 mb-2" />
+                          ))}
+                        </div>
                       ) : (
-                        <span className="text-gray-400">Click or drag image here</span>
+                        <span className="text-gray-400">Click or drag images here</span>
                       )}
                       <input
                         ref={fileInputRef}
                         type="file"
-                        id="image"
-                        name="image"
+                        id="images"
+                        name="images"
                         accept="image/*"
+                        multiple
                         className="hidden"
                         onChange={handleImageChange}
                       />
                     </div>
-                    {errors.image && <p className="text-red-600 mt-1">{errors.image}</p>}
+                    {errors.images && <p className="text-red-600 mt-1">{errors.images}</p>}
                   </div>
 
                   <div className="col-span-2 md:col-span-1 flex flex-col gap-2 mt-6">

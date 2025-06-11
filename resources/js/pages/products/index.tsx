@@ -6,8 +6,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
 import { Head, Link, usePage } from '@inertiajs/react';
-import { PlusIcon } from 'lucide-react';
-import { useState } from 'react';
+import { PlusIcon, MoreVertical } from 'lucide-react';
+import { useState, useRef, useEffect } from 'react';
 import { Inertia } from '@inertiajs/inertia';
 
 type PageProps = {
@@ -23,7 +23,6 @@ type Product = {
   brand: { id: number; name: string } | null;
   is_active: boolean;
   price?: number;
-  // ...add other fields as needed
 };
 
 type ProductsPageProps = PageProps & {
@@ -42,8 +41,11 @@ export default function ProductsIndex() {
 
   const [search, setSearch] = useState('');
   const [selected, setSelected] = useState<Product | null>(null);
+  const [openMenuId, setOpenMenuId] = useState<number | null>(null);
+  const [menuPosition, setMenuPosition] = useState<{ left: number; top: number } | null>(null);
+  const buttonRefs = useRef<{ [key: number]: HTMLButtonElement | null }>({});
+  const menuDropdownRef = useRef<HTMLDivElement | null>(null);
 
-  // Filter products for suggestions and table
   const suggestions = search
     ? products.filter(product =>
         product.name.toLowerCase().includes(search.toLowerCase())
@@ -79,6 +81,46 @@ export default function ProductsIndex() {
     }
   }
 
+  function handleMenuToggle(id: number) {
+    if (openMenuId === id) {
+      setOpenMenuId(null);
+      setMenuPosition(null);
+    } else {
+      setOpenMenuId(id);
+      const btn = buttonRefs.current[id];
+      if (btn) {
+        const rect = btn.getBoundingClientRect();
+        setMenuPosition({
+          left: rect.left,
+          top: rect.bottom + 4,
+        });
+      }
+    }
+  }
+
+  function handleMenuClose() {
+    setOpenMenuId(null);
+    setMenuPosition(null);
+  }
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (
+        menuDropdownRef.current &&
+        !menuDropdownRef.current.contains(event.target as Node)
+      ) {
+        setOpenMenuId(null);
+        setMenuPosition(null);
+      }
+    }
+    if (openMenuId !== null) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [openMenuId]);
+
   return (
     <AppLayout breadcrumbs={breadcrumbs}>
       <Head title="Products" />
@@ -105,7 +147,6 @@ export default function ProductsIndex() {
                   <span className="max-sm:sr-only">Add new Product</span>
                 </Button>
               </Link>
-              {/* Suggestions dropdown */}
               {search && !selected && suggestions.length > 0 && (
                 <div className="absolute top-full left-0 z-10 w-full text-gray-500 bg-white border rounded shadow mt-1 max-h-40 overflow-y-auto">
                   {suggestions.map(product => (
@@ -123,13 +164,12 @@ export default function ProductsIndex() {
           </div>
 
           <Card>
-            <CardContent>
+            <CardContent className="min-h-[500px]">
               <Table>
                 <TableHeader>
                   <TableRow>
                     <TableHead>#</TableHead>
                     <TableHead>Name</TableHead>
-                    <TableHead>Image</TableHead>
                     <TableHead>Category</TableHead>
                     <TableHead>Brand</TableHead>
                     <TableHead>Price</TableHead>
@@ -141,21 +181,8 @@ export default function ProductsIndex() {
                   {filteredProducts.map((product, idx) => (
                     <TableRow key={product.id}>
                       <TableCell>{idx + 1}</TableCell>
-                      <TableCell>{product.name}</TableCell>
                       <TableCell>
-                        {product.image ? (
-                          <img
-                            src={
-                              product.image.startsWith('http')
-                                ? product.image
-                                : `/storage/${product.image}`
-                            }
-                            alt={product.name}
-                            className="h-10 w-10 object-cover rounded"
-                          />
-                        ) : (
-                          <span className="text-gray-400">No image</span>
-                        )}
+                        {product.name}
                       </TableCell>
                       <TableCell>
                         {product.category ? product.category.name : <span className="text-gray-400">No category</span>}
@@ -164,12 +191,12 @@ export default function ProductsIndex() {
                         {product.brand ? product.brand.name : <span className="text-gray-400">No brand</span>}
                       </TableCell>
                       <TableCell>
-  {product.price !== undefined && product.price !== null ? (
-    <span>₱{product.price}</span>
-  ) : (
-    <span className="text-gray-400">No price</span>
-  )}
-</TableCell>
+                        {product.price !== undefined && product.price !== null ? (
+                          <span>₱{product.price}</span>
+                        ) : (
+                          <span className="text-gray-400">No price</span>
+                        )}
+                      </TableCell>
                       <TableCell>
                         {product.is_active ? (
                           <span className="text-green-600">Active</span>
@@ -178,18 +205,60 @@ export default function ProductsIndex() {
                         )}
                       </TableCell>
                       <TableCell>
-                        <Link href={`/products/${product.id}/edit`}>
-                          <Button size="sm" variant="outline" className="mr-2">
-                            Edit
+                        <div className="relative">
+                          <Button
+                            ref={el => { buttonRefs.current[product.id] = el; }}
+                            size="icon"
+                            variant="ghost"
+                            onClick={e => {
+                              e.stopPropagation();
+                              handleMenuToggle(product.id);
+                            }}
+                            aria-label="Actions"
+                          >
+                            <MoreVertical />
                           </Button>
-                        </Link>
-                        <Button
-                          size="sm"
-                          variant="destructive"
-                          onClick={() => handleDelete(product.id)}
-                        >
-                          Delete
-                        </Button>
+                          {openMenuId === product.id && menuPosition && (
+                            <div
+                              ref={menuDropdownRef}
+                              className="fixed z-50 w-32 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5"
+                              style={{
+                                left: menuPosition.left,
+                                top: menuPosition.top,
+                              }}
+                              onClick={e => e.stopPropagation()}
+                            >
+                              <div className="py-1 flex flex-col">
+                                <Link href={`/products/${product.id}`}>
+                                  <button
+                                    className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100"
+                                    onClick={handleMenuClose}
+                                  >
+                                    Show
+                                  </button>
+                                </Link>
+                                <Link href={`/products/${product.id}/edit`}>
+                                  <button
+                                    className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100"
+                                    onClick={handleMenuClose}
+                                  >
+                                    Edit
+                                  </button>
+                                </Link>
+                                <hr className="my-1" />
+                                <button
+                                  className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100"
+                                  onClick={() => {
+                                    handleMenuClose();
+                                    handleDelete(product.id);
+                                  }}
+                                >
+                                  Delete
+                                </button>
+                              </div>
+                            </div>
+                          )}
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))}
