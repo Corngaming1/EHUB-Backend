@@ -125,7 +125,6 @@ export default function OrdersIndex() {
      <TableHead>Grand Total</TableHead>
      <TableHead>Payment Method</TableHead>
      <TableHead>Payment Status</TableHead>
-     <TableHead>Currency</TableHead>
      <TableHead>Action</TableHead>
  </TableRow>
     </TableHeader>
@@ -137,10 +136,9 @@ export default function OrdersIndex() {
    {order.user ? `${order.user.name} (ID: ${order.user.id})` : 'N/A'}
       </TableHead>
       <TableHead>{order.status}</TableHead>
-      <TableHead>{order.grand_total}</TableHead>
+      <TableHead>₱{order.grand_total}</TableHead>
       <TableHead>{order.payment_method}</TableHead>
       <TableHead>{order.payment_status}</TableHead>
-      <TableHead>{order.currency}</TableHead>
       <TableHead>
    <div className="relative">
 <Button

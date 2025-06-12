@@ -9,6 +9,8 @@ import { Head, Link, usePage } from '@inertiajs/react';
 import { PlusIcon } from 'lucide-react';
 import { useState } from 'react';
 import { Inertia } from '@inertiajs/inertia';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { UserRoundIcon } from 'lucide-react';
 
 type PageProps = {
   auth?: any;
@@ -124,6 +126,7 @@ export default function UsersDashboard() {
               <Table>
                 <TableHeader>
                   <TableRow>
+                    <TableHead>Profile</TableHead>
                     <TableHead>#</TableHead>
                     <TableHead>Name</TableHead>
                     <TableHead>Email</TableHead>
@@ -135,6 +138,13 @@ export default function UsersDashboard() {
                 <TableBody>
                   {filteredUsers.map((user, idx) => (
                     <TableRow key={user.id}>
+                      <TableCell>
+                        <Avatar>
+                          <AvatarFallback>
+                            <UserRoundIcon size={16} className="opacity-60" aria-hidden="true" />
+                          </AvatarFallback>
+                        </Avatar>
+                      </TableCell>
                       <TableCell>{idx + 1}</TableCell>
                       <TableCell>{user.name}</TableCell>
                       <TableCell>{user.email}</TableCell>

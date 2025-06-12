@@ -4,7 +4,7 @@ import { NavUser } from '@/components/nav-user';
 import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from '@/components/ui/sidebar';
 import { type NavItem } from '@/types';
 import { Link } from '@inertiajs/react';
-import { BookOpen, BriefcaseBusinessIcon, Folder, LayoutGrid, MonitorSmartphoneIcon } from 'lucide-react';
+import { BookOpen, BriefcaseBusinessIcon, Folder, LayoutGrid, Microchip, MonitorSmartphoneIcon, ShoppingCart, Tag, Tags, UserRound } from 'lucide-react';
 import AppLogo from './app-logo';
 
 const mainNavItems: NavItem[] = [
@@ -17,7 +17,7 @@ const mainNavItems: NavItem[] = [
          {
         title: 'Users',
         href: '/users',
-        icon: BookOpen,
+        icon: UserRound,
     },
 
        {
@@ -35,27 +35,17 @@ const mainNavItems: NavItem[] = [
       {
         title: 'Products',
         href: '/products',
-        icon: BriefcaseBusinessIcon,
+        icon:  Tags,
     },
 
        {
         title: 'Orders',
         href: '/orders',
-        icon: MonitorSmartphoneIcon,
+        icon: ShoppingCart,
     },
 ];
 
 const footerNavItems: NavItem[] = [
-    {
-        title: 'Repository',
-        href: 'https://github.com/laravel/react-starter-kit',
-        icon: Folder,
-    },
-    {
-        title: 'Documentation',
-        href: 'https://laravel.com/docs/starter-kits#react',
-        icon: BookOpen,
-    },
 ];
 
 export function AppSidebar() {

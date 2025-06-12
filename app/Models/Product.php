@@ -20,4 +20,24 @@ class Product extends Model
     {
         return $this->belongsTo(Brand::class, 'brand_id');
     }
+
+    protected static function booted()
+{
+    static::updated(function ($product) {
+        if ($product->isDirty('price')) {
+            // Update all order items with this product
+            $orderItems = \App\Models\OrderItem::where('product_id', $product->id)->get();
+
+            foreach ($orderItems as $item) {
+                $item->price = $product->price;
+                $item->save();
+
+                // Recalculate order grand total
+                $order = $item->order;
+                $order->grand_total = $order->items()->sum(\DB::raw('quantity * price'));
+                $order->save();
+            }
+        }
+    });
+}
 }

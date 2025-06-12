@@ -18,12 +18,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
         return Inertia::render('dashboard');
     })->name('dashboard');
 
-     Route::resource('users', UserController::class);
+    Route::resource('users', UserController::class);
     Route::resource('categories', CategoryController::class);
     Route::resource('brands', BrandController::class);
     Route::resource('products', ProductController::class);
     Route::resource('orders', OrderController::class);
-     Route::resource('addresses', AddressController::class);
+    Route::resource('addresses', AddressController::class);
 });
 
 require __DIR__.'/settings.php';
