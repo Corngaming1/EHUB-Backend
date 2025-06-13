@@ -16,7 +16,15 @@ const breadcrumbs: BreadcrumbItem[] = [
   },
 ];
 
-export default function EditBrand({ brand }: { brand: any }) {
+interface Brand {
+  id: number;
+  name: string;
+  slug: string;
+  image?: string | null;
+  is_active: boolean;
+}
+
+export default function EditBrand({ brand }: { brand: Brand }) {
   const { data, setData, processing, errors } = useForm<{
     name: string;
     slug: string;
