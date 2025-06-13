@@ -10,10 +10,19 @@ import { PlusIcon, MoreVertical } from 'lucide-react';
 import { useState, useRef, useEffect } from 'react';
 import { Inertia } from '@inertiajs/inertia';
 
-type PageProps = {
-  auth?: any;
-  [key: string]: any;
+type Auth = {
+  user: {
+    id: number;
+    name: string;
+    email: string;
+  };
 };
+
+type PageProps = {
+  auth?: Auth;
+  [key: string]: unknown;
+};
+
 
 type Product = {
   id: number;
