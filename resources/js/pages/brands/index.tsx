@@ -9,10 +9,8 @@ import { Head, Link, usePage } from '@inertiajs/react';
 import { PlusIcon } from 'lucide-react';
 import { Inertia } from '@inertiajs/inertia';
 
-// Define a minimal PageProps type if not available from elsewhere
 type PageProps = {
-    auth?: any;
-    [key: string]: any;
+  brands: Brand[];
 };
 
 type Brand = {
@@ -31,7 +29,7 @@ const breadcrumbs: BreadcrumbItem[] = [
 ];
 
 export default function BrandsIndex() {
-    const brands: Brand[] = (usePage().props as any).brands ?? [];
+    const { brands } = usePage<PageProps>().props;
 
     function handleDelete(id: number) {
         if (confirm('Are you sure you want to delete this brand?')) {
