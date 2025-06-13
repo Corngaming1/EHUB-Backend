@@ -15,8 +15,20 @@ const breadcrumbs: BreadcrumbItem[] = [
     href: '/products',
   },
 ];
+type Product = {
+  id: number;
+  name: string;
+  slug: string;
+  price: number | string;
+  is_active: boolean;
+  in_stock: boolean;
+  is_featured: boolean;
+  on_sale: boolean;
+  images?: string[];
+};
 
-export default function EditProduct({ product }: { product: any }) {
+
+export default function EditProduct({ product }: { product: Product }) {
   // Track existing images (from backend) and new images (from user)
   const [existingImages, setExistingImages] = useState<string[]>(
     Array.isArray(product.images)
