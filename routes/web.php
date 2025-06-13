@@ -8,11 +8,15 @@ use App\Http\Controllers\ProductController;
 use App\Http\Controllers\AddressController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
+use Tightenco\Ziggy\Ziggy;
 
 Route::get('/', function () {
     return Inertia::render('welcome');
 })->name('home');
 
+Route::get('/ziggy.js', function () {
+    return response()->json(new Ziggy);
+})->name('ziggy');
 
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
