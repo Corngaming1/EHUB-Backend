@@ -50,7 +50,7 @@ export default function OrdersCreate() {
   useEffect(() => {
     const total = data.items.reduce((sum, item) => sum + item.price * item.quantity, 0);
     setData('grand_total', total.toFixed(2));
-  }, [data.items]);
+  }, [data.items, setData]);
 
   // Handle product change in an item
   function handleProductChange(index: number, productId: string) {
