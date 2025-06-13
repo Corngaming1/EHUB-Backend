@@ -113,10 +113,10 @@ class OrderController extends Controller
                 'notes' => $order->notes,
                 'user' => $order->user ? $order->user->only(['id', 'name']) : null,
                 'items' => $order->items->map(fn($item) => [
-                    'id' => $item->id,
-                    'quantity' => $item->quantity,
-                    'unit_amount' => $item->unit_amount,
-                    'product' => $item->product ? $item->product->only(['id', 'name', 'price']) : null,
+                'id' => $item->id,
+                'quantity' => $item->quantity,
+                'unit_amount' => $item->unit_amount,
+                'product' => $item->product ? $item->product->only(['id', 'name', 'price']) : null,
                 ]),
                 'created_at' => $order->created_at,
                 'updated_at' => $order->updated_at,
@@ -153,52 +153,54 @@ class OrderController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, Order $order)
+public function update(Request $request, $id)
 {
+    // ✅ Fetch the order first
+    $order = \App\Models\Order::findOrFail($id);
+
+    // ✅ Then validate the request
     $validated = $request->validate([
-        'user_id' => 'sometimes|required|exists:users,id',
-        'grand_total' => 'sometimes|required|numeric',
-        'payment_method' => 'sometimes|required|string|max:255',
-        'payment_status' => 'sometimes|required|string|max:255',
-        'status' => 'sometimes|required|in:new,processing,shipped,delivered,canceled',
-        'currency' => 'sometimes|required|string|max:10',
-        'shipping_amount' => 'nullable|numeric',
-        'shipping_method' => 'nullable|string|max:255',
+        'user_id' => 'required|exists:users,id',
+        'payment_method' => 'required|string',
+        'payment_status' => 'required|string',
+        'status' => 'required|string',
+        'currency' => 'required|string',
+        'shipping_amount' => 'required|numeric',
+        'shipping_method' => 'required|string',
         'notes' => 'nullable|string',
-        'items' => 'required|array|min:1',
+        'items' => 'required|array',
+        'items.*.id' => 'nullable|integer',
         'items.*.product_id' => 'required|exists:products,id',
         'items.*.quantity' => 'required|integer|min:1',
+        'items.*.unit_amount' => 'required|numeric|min:0',
     ]);
 
-    // Update order fields
+    // ✅ Now you can safely use $order
     $order->update($validated);
 
-    // Remove old items
+    // Delete old items and recreate them
     $order->items()->delete();
 
     $grandTotal = 0;
 
-    // Add new items
     foreach ($validated['items'] as $itemData) {
         $product = \App\Models\Product::findOrFail($itemData['product_id']);
-        $price = $product->price;
         $quantity = $itemData['quantity'];
+        $unitAmount = $itemData['unit_amount'];
+        $grandTotal += $unitAmount * $quantity;
 
         $order->items()->create([
-            'product_id' => $product->id,
+            'product_id' => $itemData['product_id'],
             'quantity' => $quantity,
-            'unit_amount' => $price,
+            'unit_amount' => $unitAmount,
         ]);
-
-        $grandTotal += $price * $quantity;
     }
 
-    // Update grand total
-    $order->grand_total = $grandTotal;
-    $order->save();
+    $order->update(['grand_total' => $grandTotal]);
 
-        return redirect()->route('orders.index')->with('success', 'Order updated successfully.');
-    }
+    return redirect()->route('orders.index')->with('success', 'Order updated successfully!');
+}
+
 
     /**
      * Remove the specified resource from storage.
