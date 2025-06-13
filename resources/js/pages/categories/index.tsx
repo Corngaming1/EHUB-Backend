@@ -11,8 +11,8 @@ import { useState } from 'react';
 import { Inertia } from '@inertiajs/inertia';
 // Define a minimal PageProps type if not available from elsewhere
 type PageProps = {
-    auth?: any;
-    [key: string]: any;
+    auth?: unknown;
+    [key: string]: unknown;
 };
 
 const breadcrumbs: BreadcrumbItem[] = [
