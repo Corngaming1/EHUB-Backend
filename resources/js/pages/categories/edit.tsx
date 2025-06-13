@@ -16,7 +16,15 @@ const breadcrumbs: BreadcrumbItem[] = [
   },
 ];
 
-export default function EditCategory({ category }: { category: any }) {
+type Category = {
+  id: number;
+  name: string;
+  slug: string;
+  image: string | null;
+  is_active: boolean;
+};
+
+export default function EditCategory({ category }: { category: Category }) {
   const { data, setData, processing, errors } = useForm<{
     name: string;
     slug: string;
