@@ -16,7 +16,15 @@ const breadcrumbs: BreadcrumbItem[] = [
   },
 ];
 
-export default function EditUser({ user }: { user: any }) {
+type User = {
+  id: number;
+  name: string;
+  email: string;
+  is_active: boolean;
+};
+
+
+export default function EditUser({ user }: { user: User }) {
   const { data, setData, processing, errors } = useForm<{
     name: string;
     email: string;

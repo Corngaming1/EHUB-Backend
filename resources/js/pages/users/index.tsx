@@ -12,9 +12,17 @@ import { Inertia } from '@inertiajs/inertia';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { UserRoundIcon } from 'lucide-react';
 
+type AuthUser = {
+  id: number;
+  name: string;
+  email: string;
+};
+
 type PageProps = {
-  auth?: any;
-  [key: string]: any;
+  auth?: {
+    user: AuthUser;
+  };
+  [key: string]: unknown;
 };
 
 type User = {
