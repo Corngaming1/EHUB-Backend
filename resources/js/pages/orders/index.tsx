@@ -12,11 +12,17 @@ import { MoreVertical } from 'lucide-react';
 import { useRef, useState, useEffect } from 'react';
 
 
-// Define a minimal PageProps type if not available from elsewhere
-type PageProps = {
-    auth?: any;
-    [key: string]: any;
+type AuthUser = {
+  id: number;
+  name: string;
+  email: string;
 };
+
+type PageProps = {
+  auth?: AuthUser;
+  [key: string]: unknown;
+};
+
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
