@@ -132,6 +132,8 @@ class ProductController extends Controller
                 'is_featured' => $product->is_featured,
                 'on_sale' => $product->on_sale,
             ],
+                'categories' => \App\Models\Category::all(['id', 'name']),  // <-- add this
+                 'brands' => \App\Models\Brand::all(['id', 'name']),          // <-- 
         ]);
     }
 

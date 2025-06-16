@@ -6,7 +6,7 @@ import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
 import { Head, Link, useForm } from '@inertiajs/react';
 import { Inertia } from '@inertiajs/inertia';
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import { route } from 'ziggy-js';
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -15,6 +15,7 @@ const breadcrumbs: BreadcrumbItem[] = [
     href: '/products',
   },
 ];
+
 type Product = {
   id: number;
   name: string;
@@ -25,22 +26,39 @@ type Product = {
   is_featured: boolean;
   on_sale: boolean;
   images?: string[];
+  category_id?: number;
+  brand_id?: number;
 };
 
+type Category = { id: number; name: string };
+type Brand = { id: number; name: string };
 
-export default function EditProduct({ product }: { product: Product }) {
-  // Track existing images (from backend) and new images (from user)
-  const [existingImages, setExistingImages] = useState<string[]>(
-    Array.isArray(product.images)
-      ? product.images.map((img: string) =>
-          img.startsWith('http') ? img : `/storage/${img}`
-        )
-      : []
-  );
-  const [removedImages, setRemovedImages] = useState<string[]>([]);
-  const [imagePreviews, setImagePreviews] = useState<string[]>([]);
-  const [newImages, setNewImages] = useState<File[]>([]);
+export default function EditProduct({
+  product,
+  categories = [],
+  brands = [],
+}: {
+  product: Product;
+  categories?: Category[];
+  brands?: Brand[];
+}) {
+  const [selectedImages, setSelectedImages] = useState<File[]>([]);
+  const [previewUrls, setPreviewUrls] = useState<string[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Generate preview URLs for selected images
+  useEffect(() => {
+    if (selectedImages.length < 1) {
+      setPreviewUrls([]);
+      return;
+    }
+
+    const urls = selectedImages.map(file => URL.createObjectURL(file));
+    setPreviewUrls(urls);
+
+    // Cleanup URLs on unmount or when selectedImages changes
+    return () => urls.forEach(url => URL.revokeObjectURL(url));
+  }, [selectedImages]);
 
   const { data, setData, processing, errors } = useForm<{
     name: string;
@@ -50,6 +68,8 @@ export default function EditProduct({ product }: { product: Product }) {
     in_stock: boolean;
     is_featured: boolean;
     on_sale: boolean;
+    category_id: number | '';
+    brand_id: number | '';
     images?: File[];
   }>({
     name: product.name || '',
@@ -59,46 +79,20 @@ export default function EditProduct({ product }: { product: Product }) {
     in_stock: !!product.in_stock,
     is_featured: !!product.is_featured,
     on_sale: !!product.on_sale,
+    category_id: product.category_id ?? '',
+    brand_id: product.brand_id ?? '',
   });
 
-  function slugify(text: string) {
-    return text
-      .toLowerCase()
-      .replace(/ /g, '-')
-      .replace(/[^\w-]+/g, '');
-  }
-
-  // REPLACE behavior: selecting new images removes all existing images
-  function handleImagesChange(e: React.ChangeEvent<HTMLInputElement>) {
-    const files = Array.from(e.target.files || []);
-    setRemovedImages(existingImages); // Mark all as removed
-    setExistingImages([]);            // Clear existing images
-    setNewImages(files);
-    setImagePreviews(files.map(file => URL.createObjectURL(file)));
-  }
-
-  function handleDrop(e: React.DragEvent<HTMLDivElement>) {
-    e.preventDefault();
-    const files = Array.from(e.dataTransfer.files || []);
-    setRemovedImages(existingImages); // Mark all as removed
-    setExistingImages([]);            // Clear existing images
-    setNewImages(files);
-    setImagePreviews(files.map(file => URL.createObjectURL(file)));
-    if (fileInputRef.current) {
-      const dataTransfer = new DataTransfer();
-      files.forEach(file => dataTransfer.items.add(file));
-      fileInputRef.current.files = dataTransfer.files;
+  function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+    if (e.target.files) {
+      const filesArray = Array.from(e.target.files);
+      setSelectedImages(filesArray);
+      setData('images', filesArray);
     }
-  }
-
-  function handleRemoveNew(idx: number) {
-    setNewImages(newImages.filter((_, i) => i !== idx));
-    setImagePreviews(imagePreviews.filter((_, i) => i !== idx));
   }
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-
     const formData = new FormData();
     formData.append('_method', 'PUT');
     formData.append('name', data.name);
@@ -108,15 +102,11 @@ export default function EditProduct({ product }: { product: Product }) {
     formData.append('in_stock', data.in_stock ? '1' : '0');
     formData.append('is_featured', data.is_featured ? '1' : '0');
     formData.append('on_sale', data.on_sale ? '1' : '0');
+    formData.append('category_id', data.category_id ? String(data.category_id) : '');
+    formData.append('brand_id', data.brand_id ? String(data.brand_id) : '');
 
-    // Send new images
-    newImages.forEach((file, idx) => {
-      formData.append(`images[${idx}]`, file);
-    });
-
-    // Send removed images (all old images if replaced)
-    removedImages.forEach((img, idx) => {
-      formData.append(`removed_images[${idx}]`, img);
+    selectedImages.forEach((file, index) => {
+      formData.append(`images[${index}]`, file);
     });
 
     Inertia.post(route('products.update', product.id), formData, {
@@ -131,152 +121,149 @@ export default function EditProduct({ product }: { product: Product }) {
       <Head title="Edit Product" />
       <div className="flex h-full flex-1 flex-col items-center justify-center gap-4 rounded-xl p-4 overflow-x-auto">
         <div className="rounded border p-6 shadow-xl w-full max-w-2xl">
-          <div className="mb-5 flex items-center justify-between">
-            <div className="text-xl text-slate-600">Edit Product</div>
-            <Link href="/products">
-              <Button
-                variant="outline"
-                className="aspect-square max-sm:p-0 cursor-pointer bg-blue-600 hover:bg-blue-700 text-white"
-              >
-                Back To Products
-              </Button>
+          <div className="mb-6 flex items-center justify-between">
+            <h1 className="text-2xl font-semibold">Edit Product</h1>
+            <Link
+              href="/products"
+              className="rounded bg-gray-200 px-4 py-2 text-gray-700 hover:bg-gray-300"
+            >
+              Back
             </Link>
           </div>
           <Card>
             <CardContent>
               <form onSubmit={handleSubmit}>
                 <div className="grid grid-cols-2 gap-4">
+                  {/* Name */}
                   <div className="col-span-2 md:col-span-1">
                     <Label htmlFor="name">Name</Label>
                     <Input
-                      type="text"
                       id="name"
-                      placeholder="Product name"
                       value={data.name}
-                      onChange={(e) => {
-                        setData('name', e.target.value);
-                        setData('slug', slugify(e.target.value));
-                      }}
+                      onChange={e => setData('name', e.target.value)}
+                      className={errors.name ? 'border-red-600' : ''}
                     />
                     {errors.name && <p className="text-red-600 mt-1">{errors.name}</p>}
                   </div>
+
+                  {/* Slug */}
                   <div className="col-span-2 md:col-span-1">
                     <Label htmlFor="slug">Slug</Label>
-                    <Input type="text" id="slug" placeholder="product-slug" value={data.slug} disabled />
+                    <Input
+                      id="slug"
+                      value={data.slug}
+                      onChange={e => setData('slug', e.target.value)}
+                      className={errors.slug ? 'border-red-600' : ''}
+                    />
                     {errors.slug && <p className="text-red-600 mt-1">{errors.slug}</p>}
                   </div>
+
+                  {/* Price */}
                   <div className="col-span-2 md:col-span-1">
                     <Label htmlFor="price">Price</Label>
                     <Input
-                      type="number"
                       id="price"
-                      placeholder="Product price"
+                      type="number"
                       value={data.price}
-                      onChange={(e) => setData('price', e.target.value)}
+                      onChange={e => setData('price', e.target.value)}
+                      className={errors.price ? 'border-red-600' : ''}
                     />
                     {errors.price && <p className="text-red-600 mt-1">{errors.price}</p>}
                   </div>
+
+                  {/* Category */}
                   <div className="col-span-2 md:col-span-1">
-                    <Label htmlFor="images">Images</Label>
-                    <div
-                      className="border-2 border-dashed rounded p-4 flex flex-col items-center justify-center cursor-pointer hover:border-blue-400 transition"
-                      onClick={() => fileInputRef.current?.click()}
-                      onDrop={handleDrop}
-                      onDragOver={(e) => e.preventDefault()}
+                    <Label htmlFor="category_id">Category</Label>
+                    <select
+                      id="category_id"
+                      value={data.category_id}
+                      onChange={e => setData('category_id', Number(e.target.value))}
+                      className="block w-full rounded border px-3 py-2"
                     >
-                      <div className="flex flex-wrap gap-2 justify-center">
-                        {/* New images */}
-                        {imagePreviews.map((src, idx) => (
-                          <div key={idx} className="relative group">
-                            <img src={src} alt={`New ${idx + 1}`} className="max-h-24 rounded" />
-                            <button
-                              type="button"
-                              className="absolute top-0 right-0 bg-red-600 text-white rounded-full px-2 py-0.5 text-xs opacity-80 hover:opacity-100"
-                              onClick={e => {
-                                e.stopPropagation();
-                                handleRemoveNew(idx);
-                              }}
-                              title="Remove"
-                            >
-                              ×
-                            </button>
-                          </div>
-                        ))}
-                      </div>
-                      {imagePreviews.length === 0 && (
-                        <span className="text-gray-400">Click or drag images here</span>
+                      <option value="">Select category</option>
+                      {categories.map(c => (
+                        <option key={c.id} value={c.id}>
+                          {c.name}
+                        </option>
+                      ))}
+                    </select>
+                    {errors.category_id && <p className="text-red-600 mt-1">{errors.category_id}</p>}
+                  </div>
+
+                  {/* Brand */}
+                  <div className="col-span-2 md:col-span-1">
+                    <Label htmlFor="brand_id">Brand</Label>
+                    <select
+                      id="brand_id"
+                      value={data.brand_id}
+                      onChange={e => setData('brand_id', Number(e.target.value))}
+                      className="block w-full rounded border px-3 py-2"
+                    >
+                      <option value="">Select brand</option>
+                      {brands.map(b => (
+                        <option key={b.id} value={b.id}>
+                          {b.name}
+                        </option>
+                      ))}
+                    </select>
+                    {errors.brand_id && <p className="text-red-600 mt-1">{errors.brand_id}</p>}
+                  </div>
+
+                  {/* Existing images preview */}
+                  <div className="col-span-2">
+                    <Label>Existing Images</Label>
+                    <div className="flex gap-2 flex-wrap mt-2">
+                      {product.images && product.images.length > 0 ? (
+                        product.images.map((imgUrl, idx) => (
+                          <img
+                            key={idx}
+                            src={imgUrl}
+                            alt={`Existing product image ${idx + 1}`}
+                            className="w-24 h-24 object-cover rounded"
+                          />
+                        ))
+                      ) : (
+                        <p className="text-gray-500">No existing images</p>
                       )}
-                      <input
-                        ref={fileInputRef}
-                        type="file"
-                        id="images"
-                        name="images"
-                        accept="image/*"
-                        multiple
-                        className="hidden"
-                        onChange={handleImagesChange}
-                      />
                     </div>
+                  </div>
+
+                  {/* New images preview */}
+                  <div className="col-span-2 mt-4">
+                    <Label>New Images Preview</Label>
+                    <div className="flex gap-2 flex-wrap mt-2">
+                      {previewUrls.length > 0 ? (
+                        previewUrls.map((url, idx) => (
+                          <img
+                            key={idx}
+                            src={url}
+                            alt={`Selected image preview ${idx + 1}`}
+                            className="w-24 h-24 object-cover rounded"
+                          />
+                        ))
+                      ) : (
+                        <p className="text-gray-500">No new images selected</p>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* File input for images */}
+                  <div className="col-span-2">
+                    <Label htmlFor="images">Select New Images</Label>
+                    <input
+                      type="file"
+                      multiple
+                      ref={fileInputRef}
+                      onChange={handleFileChange}
+                      className="block w-full rounded border px-3 py-2"
+                    />
                     {errors.images && <p className="text-red-600 mt-1">{errors.images}</p>}
                   </div>
-                  {/* Switches for in_stock, is_active, is_featured, on_sale */}
-                  <div className="col-span-2 grid grid-cols-2 gap-4 mt-4">
-                    <div className="flex items-center gap-2">
-                      <Input
-                        type="checkbox"
-                        id="in_stock"
-                        className="w-4 h-4"
-                        checked={data.in_stock}
-                        onChange={(e) => setData('in_stock', e.target.checked)}
-                      />
-                      <Label htmlFor="in_stock" className="mb-0">
-                        In Stock
-                      </Label>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Input
-                        type="checkbox"
-                        id="is_active"
-                        className="w-4 h-4"
-                        checked={data.is_active}
-                        onChange={(e) => setData('is_active', e.target.checked)}
-                      />
-                      <Label htmlFor="is_active" className="mb-0">
-                        Active
-                      </Label>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Input
-                        type="checkbox"
-                        id="is_featured"
-                        className="w-4 h-4"
-                        checked={data.is_featured}
-                        onChange={(e) => setData('is_featured', e.target.checked)}
-                      />
-                      <Label htmlFor="is_featured" className="mb-0">
-                        Featured
-                      </Label>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Input
-                        type="checkbox"
-                        id="on_sale"
-                        className="w-4 h-4"
-                        checked={data.on_sale}
-                        onChange={(e) => setData('on_sale', e.target.checked)}
-                      />
-                      <Label htmlFor="on_sale" className="mb-0">
-                        On Sale
-                      </Label>
-                    </div>
-                  </div>
-                  <div className="col-span-2 mt-4">
-                    <Button
-                      type="submit"
-                      className="cursor-pointer bg-blue-600 hover:bg-blue-700 text-white w-full"
-                      disabled={processing}
-                    >
-                      Save Changes
+
+                  {/* Submit */}
+                  <div className="col-span-2 flex justify-end">
+                    <Button type="submit" disabled={processing}>
+                      {processing ? 'Updating...' : 'Update Product'}
                     </Button>
                   </div>
                 </div>
