@@ -23,25 +23,43 @@ Route::get('/ziggy.js', function () {
     return response()->json(new Ziggy);
 })->name('ziggy');
 
+// Authenticated and verified routes with role-based access control
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
-    Route::resource('users', UserController::class);
+    // Users resource accessible only by admin
+    Route::middleware('role:admin')->group(function () {
+        Route::resource('users', UserController::class);
+    });
+
+    // Products resource accessible by admin and staff
+    Route::middleware('role:admin,staff')->group(function () {
+        Route::resource('products', ProductController::class);
+    });
+
+    // Other resources accessible by any authenticated and verified user
     Route::resource('categories', CategoryController::class);
     Route::resource('brands', BrandController::class);
-    Route::resource('products', ProductController::class);
     Route::resource('orders', OrderController::class);
     Route::resource('addresses', AddressController::class);
-
 });
 
+// API routes
 Route::prefix('api')->middleware('api')->group(function () {
-    Route::apiresource('apiusers', ApiUserController::class);
-    Route::apiresource('apicategories', ApiCategoryController::class);
-    Route::apiresource('apibrands', ApiBrandController::class);
+    Route::apiResource('apiusers', ApiUserController::class);
+    Route::apiResource('apicategories', ApiCategoryController::class);
+    Route::apiResource('apibrands', ApiBrandController::class);
     Route::apiResource('apiproducts', ApiProductController::class); 
-    Route::apiresource('apiorders', ApiOrderController::class);
-    Route::apiresource('addresses', AddressController::class);
+    Route::apiResource('apiorders', ApiOrderController::class);
+    Route::apiResource('addresses', AddressController::class);
+});
+
+// Guest-only routes
+Route::middleware('guest')->group(function () {
+    Route::get('login', [LoginController::class, 'showLoginForm'])->name('login');
+    Route::post('login', [LoginController::class, 'login']);
+    Route::get('register', [RegisterController::class, 'showRegistrationForm'])->name('register');
+    Route::post('register', [RegisterController::class, 'register']);
 });
 
 require __DIR__.'/settings.php';
