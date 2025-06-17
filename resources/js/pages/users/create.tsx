@@ -21,11 +21,13 @@ export default function CreateUser() {
     password: string;
     password_confirmation: string;
     email_verified_at: string | null;
+     role: string;
   }>({
     name: '',
     email: '',
     password: '',
     password_confirmation: '',
+    role: '', 
     email_verified_at: null,
   });
 
@@ -129,6 +131,24 @@ export default function CreateUser() {
                       disabled={processing}
                     />
                     {errors.email_verified_at && <p className="text-red-600 mt-1">{errors.email_verified_at}</p>}
+                  </div>
+
+                  <div className="col-span-2 md:col-span-1">
+                    <Label htmlFor="role">Role</Label>
+                    <select
+                      id="role"
+                      value={data.role}
+                      onChange={(e) => setData('role', e.target.value)}
+                      required
+                      disabled={processing}
+                      className="w-full rounded border px-3 py-2"
+                    >
+                      <option value="">Select role</option>
+                      <option value="admin">Admin</option>
+                      <option value="staff">Staff</option>
+                      <option value="customer">Customer</option>
+                    </select>
+                    {errors.role && <p className="text-red-600 mt-1">{errors.role}</p>}
                   </div>
 
                   <div className="col-span-2 mt-4">

@@ -21,6 +21,7 @@ type User = {
   name: string;
   email: string;
   is_active: boolean;
+  role: string; 
 };
 
 
@@ -29,10 +30,12 @@ export default function EditUser({ user }: { user: User }) {
     name: string;
     email: string;
     is_active: boolean;
+    role: string;
   }>({
     name: user.name || '',
     email: user.email || '',
     is_active: !!user.is_active,
+    role: user.role || '',
   });
 
   function handleSubmit(e: React.FormEvent) {
@@ -85,6 +88,23 @@ export default function EditUser({ user }: { user: User }) {
                       onChange={(e) => setData('email', e.target.value)}
                     />
                     {errors.email && <p className="text-red-600 mt-1">{errors.email}</p>}
+                  </div>
+                  <div className="col-span-2 md:col-span-1">
+                    <Label htmlFor="role">Role</Label>
+                    <select
+                      id="role"
+                      value={data.role}
+                      onChange={(e) => setData('role', e.target.value)}
+                      required
+                      disabled={processing}
+                      className="w-full rounded border px-3 py-2"
+                    >
+                      <option value="">Select role</option>
+                      <option value="admin">Admin</option>
+                      <option value="staff">Staff</option>
+                      <option value="customer">Customer</option>
+                    </select>
+                    {errors.role && <p className="text-red-600 mt-1">{errors.role}</p>}
                   </div>
                   <div className="col-span-2 mt-4">
                     <Button

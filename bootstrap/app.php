@@ -17,11 +17,13 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware) {
         $middleware->encryptCookies(except: ['appearance', 'sidebar_state']);
 
+        $middleware->redirectGuestsTo(fn (Request $request) => route('home'));
+
         $middleware->web(append: [
             HandleAppearance::class,
             HandleInertiaRequests::class,
             AddLinkHeadersForPreloadedAssets::class,
-            RoleMiddleware::class
+            
         ]);
 
           $middleware->alias([

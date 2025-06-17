@@ -16,14 +16,18 @@ class RoleMiddleware
    public function handle(Request $request, Closure $next, ...$roles)
 {
     $user = $request->user();
-
-    // Allow access if route is 'welcome' or other public routes
-    if ($request->routeIs('home')) {
+    // Allow access to public routes like welcome, login, and register
+    if (
+        $request->routeIs('welcome') ||
+        $request->routeIs('login') ||
+        $request->routeIs('register')
+    ) {
         return $next($request);
     }
 
+    // If user is not authenticated, redirect to login instead of aborting
     if (! $user) {
-        abort(403, 'Unauthorized');
+        return redirect()->route('login');
     }
 
     switch ($user->role) {
@@ -49,5 +53,6 @@ class RoleMiddleware
     abort(403, 'Unauthorized');
 }
 }
+
         
     

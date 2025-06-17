@@ -35,13 +35,14 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Products resource accessible by admin and staff
     Route::middleware('role:admin,staff')->group(function () {
         Route::resource('products', ProductController::class);
+        Route::resource('brands', BrandController::class);
+        Route::resource('categories', CategoryController::class);
+        Route::resource('orders', OrderController::class);
+        Route::resource('addresses', AddressController::class);
     });
+  
+   
 
-    // Other resources accessible by any authenticated and verified user
-    Route::resource('categories', CategoryController::class);
-    Route::resource('brands', BrandController::class);
-    Route::resource('orders', OrderController::class);
-    Route::resource('addresses', AddressController::class);
 });
 
 // API routes
