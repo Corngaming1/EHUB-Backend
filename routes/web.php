@@ -55,13 +55,6 @@ Route::prefix('api')->middleware('api')->group(function () {
     Route::apiResource('addresses', AddressController::class);
 });
 
-// Guest-only routes
-Route::middleware('guest')->group(function () {
-    Route::get('login', [LoginController::class, 'showLoginForm'])->name('login');
-    Route::post('login', [LoginController::class, 'login']);
-    Route::get('register', [RegisterController::class, 'showRegistrationForm'])->name('register');
-    Route::post('register', [RegisterController::class, 'register']);
-});
 
 require __DIR__.'/settings.php';
 require __DIR__.'/auth.php';
