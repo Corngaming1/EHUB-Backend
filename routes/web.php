@@ -7,6 +7,10 @@ use App\Http\Controllers\BrandController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\AddressController;
 use App\Http\Controllers\ApiProductController;
+use App\Http\Controllers\ApiUserController;
+use App\Http\Controllers\ApiOrderController;
+use App\Http\Controllers\ApiCategoryController;
+use App\Http\Controllers\ApiBrandController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use Tightenco\Ziggy\Ziggy;
@@ -32,11 +36,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
 });
 
 Route::prefix('api')->middleware('api')->group(function () {
-    Route::apiresource('users', UserController::class);
-    Route::apiresource('categories', CategoryController::class);
-    Route::apiresource('brands', BrandController::class);
+    Route::apiresource('apiusers', ApiUserController::class);
+    Route::apiresource('apicategories', ApiCategoryController::class);
+    Route::apiresource('apibrands', ApiBrandController::class);
     Route::apiResource('apiproducts', ApiProductController::class); 
-    Route::apiresource('orders', OrderController::class);
+    Route::apiresource('apiorders', ApiOrderController::class);
     Route::apiresource('addresses', AddressController::class);
 });
 
