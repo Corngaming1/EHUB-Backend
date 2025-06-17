@@ -6,23 +6,13 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
 import { Head, Link, usePage } from '@inertiajs/react';
-import { PlusIcon } from 'lucide-react';
-import { useState } from 'react';
+import { PlusIcon, MoreVertical } from 'lucide-react';
+import { useState, useRef, useEffect } from 'react';
 import { Inertia } from '@inertiajs/inertia';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { UserRoundIcon } from 'lucide-react';
-
-type AuthUser = {
-  id: number;
-  name: string;
-  email: string;
-};
 
 type PageProps = {
-  auth?: {
-    user: AuthUser;
-  };
-  [key: string]: unknown;
+  auth?: any;
+  [key: string]: any;
 };
 
 type User = {
@@ -49,6 +39,12 @@ export default function UsersDashboard() {
 
   const [search, setSearch] = useState('');
   const [selected, setSelected] = useState<User | null>(null);
+
+  // Dropdown menu state and refs
+  const [openMenuId, setOpenMenuId] = useState<number | null>(null);
+  const [menuPosition, setMenuPosition] = useState<{ left: number; top: number } | null>(null);
+  const buttonRefs = useRef<{ [key: number]: HTMLButtonElement | null }>({});
+  const menuDropdownRef = useRef<HTMLDivElement | null>(null);
 
   // Filter users for suggestions and table
   const suggestions = search
@@ -82,9 +78,51 @@ export default function UsersDashboard() {
 
   function handleDelete(id: number) {
     if (confirm('Are you sure you want to delete this user?')) {
-      Inertia.delete(`/users/${id}`);
+      Inertia.delete('/users/${id}');
+      setOpenMenuId(null);
+      setMenuPosition(null);
     }
   }
+
+  function handleMenuToggle(id: number) {
+    if (openMenuId === id) {
+      setOpenMenuId(null);
+      setMenuPosition(null);
+    } else {
+      setOpenMenuId(id);
+      const btn = buttonRefs.current[id];
+      if (btn) {
+        const rect = btn.getBoundingClientRect();
+        setMenuPosition({
+          left: rect.left,
+          top: rect.bottom + 4,
+        });
+      }
+    }
+  }
+
+  function handleMenuClose() {
+    setOpenMenuId(null);
+    setMenuPosition(null);
+  }
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (
+        menuDropdownRef.current &&
+        !menuDropdownRef.current.contains(event.target as Node)
+      ) {
+        setOpenMenuId(null);
+        setMenuPosition(null);
+      }
+    }
+    if (openMenuId !== null) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [openMenuId]);
 
   return (
     <AppLayout breadcrumbs={breadcrumbs}>
@@ -134,7 +172,6 @@ export default function UsersDashboard() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Profile</TableHead>
                     <TableHead>#</TableHead>
                     <TableHead>Name</TableHead>
                     <TableHead>Email</TableHead>
@@ -146,13 +183,6 @@ export default function UsersDashboard() {
                 <TableBody>
                   {filteredUsers.map((user, idx) => (
                     <TableRow key={user.id}>
-                      <TableCell>
-                        <Avatar>
-                          <AvatarFallback>
-                            <UserRoundIcon size={16} className="opacity-60" aria-hidden="true" />
-                          </AvatarFallback>
-                        </Avatar>
-                      </TableCell>
                       <TableCell>{idx + 1}</TableCell>
                       <TableCell>{user.name}</TableCell>
                       <TableCell>{user.email}</TableCell>
@@ -161,18 +191,52 @@ export default function UsersDashboard() {
                       </TableCell>
                       <TableCell>{user.created_at}</TableCell>
                       <TableCell>
-                        <Link href={`/users/${user.id}/edit`}>
-                          <Button size="sm" variant="outline" className="mr-2">
-                            Edit
+                        <div className="relative">
+                          <Button
+                            ref={el => { buttonRefs.current[user.id] = el; }}
+                            size="icon"
+                            variant="ghost"
+                            onClick={e => {
+                              e.stopPropagation();
+                              handleMenuToggle(user.id);
+                            }}
+                            aria-label="Actions"
+                          >
+                            <MoreVertical />
                           </Button>
-                        </Link>
-                        <Button
-                          size="sm"
-                          variant="destructive"
-                          onClick={() => handleDelete(user.id)}
-                        >
-                          Delete
-                        </Button>
+                          {openMenuId === user.id && menuPosition && (
+                            <div
+                              ref={menuDropdownRef}
+                              className="fixed z-50 w-32 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5"
+                              style={{
+                                left: menuPosition.left,
+                                top: menuPosition.top,
+                              }}
+                              onClick={e => e.stopPropagation()}
+                            >
+                              <div className="py-1 flex flex-col">
+                                <Link href={`/users/${user.id}/edit`}>
+                                  <button
+                                    className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100"
+                                    onClick={handleMenuClose}
+                                  >
+                                    Edit
+                                  </button>
+                                </Link>
+                                <hr className="my-1" />
+                                <button
+                                  className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100"
+                                  onClick={() => {
+                                    handleMenuClose();
+                                    handleDelete(user.id);
+                                  }}
+                                >
+                                  Delete
+                                </button>
+                              </div>
+                            </div>
+                          )}
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))}

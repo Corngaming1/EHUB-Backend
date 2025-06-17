@@ -7,6 +7,9 @@ import { Link } from '@inertiajs/react';
 import { BookOpen, BriefcaseBusinessIcon, Folder, LayoutGrid, Microchip, MonitorSmartphoneIcon, ShoppingCart, Tag, Tags, UserRound } from 'lucide-react';
 import AppLogo from './app-logo';
 
+
+
+
 const mainNavItems: NavItem[] = [
     {
         title: 'Dashboard',
