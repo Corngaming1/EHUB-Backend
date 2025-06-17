@@ -6,6 +6,7 @@ use App\Http\Controllers\OrderController;
 use App\Http\Controllers\BrandController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\AddressController;
+use App\Http\Controllers\ApiProductController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use Tightenco\Ziggy\Ziggy;
@@ -27,6 +28,16 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::resource('products', ProductController::class);
     Route::resource('orders', OrderController::class);
     Route::resource('addresses', AddressController::class);
+
+});
+
+Route::prefix('api')->middleware('api')->group(function () {
+    Route::apiresource('users', UserController::class);
+    Route::apiresource('categories', CategoryController::class);
+    Route::apiresource('brands', BrandController::class);
+    Route::apiResource('apiproducts', ApiProductController::class); 
+    Route::apiresource('orders', OrderController::class);
+    Route::apiresource('addresses', AddressController::class);
 });
 
 require __DIR__.'/settings.php';
