@@ -10,9 +10,10 @@ import { PlusIcon, MoreVertical } from 'lucide-react';
 import { useState, useRef, useEffect } from 'react';
 import { Inertia } from '@inertiajs/inertia';
 
-type PageProps = {
-  auth?: any;
-  [key: string]: any;
+type AuthUser = {
+  id: number;
+  name: string;
+  email: string;
 };
 
 type User = {
@@ -23,7 +24,8 @@ type User = {
   created_at: string;
 };
 
-type UsersPageProps = PageProps & {
+type UsersPageProps = {
+  auth: AuthUser;
   users: User[];
 };
 
@@ -40,17 +42,13 @@ export default function UsersDashboard() {
   const [search, setSearch] = useState('');
   const [selected, setSelected] = useState<User | null>(null);
 
-  // Dropdown menu state and refs
   const [openMenuId, setOpenMenuId] = useState<number | null>(null);
   const [menuPosition, setMenuPosition] = useState<{ left: number; top: number } | null>(null);
   const buttonRefs = useRef<{ [key: number]: HTMLButtonElement | null }>({});
   const menuDropdownRef = useRef<HTMLDivElement | null>(null);
 
-  // Filter users for suggestions and table
   const suggestions = search
-    ? users.filter(user =>
-        user.name.toLowerCase().includes(search.toLowerCase())
-      )
+    ? users.filter(user => user.name.toLowerCase().includes(search.toLowerCase()))
     : [];
 
   const filteredUsers = selected
@@ -76,9 +74,9 @@ export default function UsersDashboard() {
     }
   }
 
-  function handleDelete(id: number) {
+  function handleDelete(userId: number) {
     if (confirm('Are you sure you want to delete this user?')) {
-      Inertia.delete('/users/${id}');
+      Inertia.delete(`/users/${userId}`);
       setOpenMenuId(null);
       setMenuPosition(null);
     }
@@ -150,7 +148,6 @@ export default function UsersDashboard() {
                   <span className="max-sm:sr-only">Add new User</span>
                 </Button>
               </Link>
-              {/* Suggestions dropdown */}
               {search && !selected && suggestions.length > 0 && (
                 <div className="absolute top-full left-0 z-10 w-full text-gray-500 bg-white border rounded shadow mt-1 max-h-40 overflow-y-auto">
                   {suggestions.map(user => (
@@ -187,7 +184,11 @@ export default function UsersDashboard() {
                       <TableCell>{user.name}</TableCell>
                       <TableCell>{user.email}</TableCell>
                       <TableCell>
-                        {user.email_verified_at ? user.email_verified_at : <span className="text-gray-400">Not verified</span>}
+                        {user.email_verified_at ? (
+                          user.email_verified_at
+                        ) : (
+                          <span className="text-gray-400">Not verified</span>
+                        )}
                       </TableCell>
                       <TableCell>{user.created_at}</TableCell>
                       <TableCell>
