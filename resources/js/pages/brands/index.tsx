@@ -12,8 +12,7 @@ import { Inertia } from '@inertiajs/inertia';
 
 // Define a minimal PageProps type if not available from elsewhere
 type PageProps = {
-  auth?: any;
-  [key: string]: any;
+  auth?: unknown;
 };
 
 const breadcrumbs: BreadcrumbItem[] = [
