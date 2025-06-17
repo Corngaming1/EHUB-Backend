@@ -10,10 +10,22 @@ import { PlusIcon, MoreVertical } from 'lucide-react';
 import { useState, useRef, useEffect } from 'react';
 import { Inertia } from '@inertiajs/inertia';
 
-// Define a minimal PageProps type if not available from elsewhere
+type AuthUser = {
+  id: number;
+  name: string;
+  email: string;
+};
+
+type Category = {
+  id: number;
+  name: string;
+  image: string | null;
+  is_active: boolean;
+};
+
 type PageProps = {
-  auth?: any;
-  [key: string]: any;
+  auth?: AuthUser;
+  categories: Category[];
 };
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -24,33 +36,18 @@ const breadcrumbs: BreadcrumbItem[] = [
 ];
 
 export default function Dashboard() {
-  type Category = {
-    id: number;
-    name: string;
-    image: string | null;
-    is_active: boolean;
-  };
-
-  type CategoriesPageProps = PageProps & {
-    categories: Category[];
-  };
-
-  const { categories } = usePage<CategoriesPageProps>().props;
+  const { categories } = usePage<PageProps>().props;
 
   const [search, setSearch] = useState('');
   const [selected, setSelected] = useState<Category | null>(null);
 
-  // Dropdown menu state and refs
   const [openMenuId, setOpenMenuId] = useState<number | null>(null);
   const [menuPosition, setMenuPosition] = useState<{ left: number; top: number } | null>(null);
   const buttonRefs = useRef<{ [key: number]: HTMLButtonElement | null }>({});
   const menuDropdownRef = useRef<HTMLDivElement | null>(null);
 
-  // Filter categories for suggestions and table
   const suggestions = search
-    ? categories.filter(cat =>
-        cat.name.toLowerCase().includes(search.toLowerCase())
-      )
+    ? categories.filter(cat => cat.name.toLowerCase().includes(search.toLowerCase()))
     : [];
 
   const filteredCategories = selected
@@ -78,9 +75,7 @@ export default function Dashboard() {
 
   function handleDelete(id: number) {
     if (confirm('Are you sure you want to delete this category?')) {
-      // Use Inertia to send a delete request
-      Inertia.delete('/categories/${id}');
-      // Close menu after delete
+      Inertia.delete(`/categories/${id}`);
       setOpenMenuId(null);
       setMenuPosition(null);
     }
@@ -152,7 +147,6 @@ export default function Dashboard() {
                   <span className="max-sm:sr-only">Add new Category</span>
                 </Button>
               </Link>
-              {/* Suggestions dropdown */}
               {search && !selected && suggestions.length > 0 && (
                 <div className="absolute top-full left-0 z-10 w-full text-gray-500 bg-white border rounded shadow mt-1 max-h-40 overflow-y-auto">
                   {suggestions.map(cat => (
