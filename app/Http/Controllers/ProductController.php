@@ -60,7 +60,7 @@ class ProductController extends Controller
             'price' => 'required|numeric',
             'images.*' => 'nullable|image|max:2048',
             'category_id' => 'required|exists:categories,id',
-            'brand_id' => 'required|exists:brands,id',
+            'brand_id' => 'nullable|exists:brands,id',
             'in_stock' => 'boolean',
             'is_active' => 'boolean',
             'is_featured' => 'boolean',

@@ -201,7 +201,6 @@ export default function CreateProduct({ categories = [], brands = [] }: CreatePr
                       id="brand_id"
                       value={data.brand_id}
                       onChange={e => setData('brand_id', Number(e.target.value))}
-                      required
                       className="w-full border rounded p-2"
                     >
                       <option value="">Select Brand</option>
