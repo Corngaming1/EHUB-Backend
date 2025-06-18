@@ -30,7 +30,7 @@ export default function Welcome() {
                                 </Link>
                                 <Link
                                     href={route('register')}
-                                    className="sm:w-56 inline-block rounded-sm border border-[#19140035] px-5 py-1.5 text-sm leading-normal text-[#1b1b18] hover:border-[#1915014a] dark:border-[#3E3E3A] dark:text-[#EDEDEC] dark:hover:border-[#62605b]"
+                                    className="sm:w-56 lg:w:60 inline-block rounded-sm border border-transparent px-5 py-1.5 text-sm leading-normal text-[#1b1b18] hover:border-[#19140035] dark:text-[#EDEDEC] dark:hover:border-[#3E3E3A]"
                                 >
                                     Register
                                 </Link>
@@ -45,8 +45,8 @@ export default function Welcome() {
                           
                   
                 </div>
-                <div className="flex justify-center"><span style={{color: '#103054' , fontFamily: "'Archivo Black', sans-serif", fontSize: '1.5rem' }}>Welcome To </span></div>
-                <div className="flex justify-center "> <span style={{color: '#103054' , fontFamily: "'Archivo Black', sans-serif", fontSize: '1.5rem' }}>ELECTRONIK <span style={{color: '#E1862D' , fontFamily: "'Archivo Black', sans-serif", fontSize: '1.5rem' }}>HUB</span></span></div>
+                <div className="flex justify-center"><span style={{color: '#000070' , fontFamily: "'Archivo Black', sans-serif", fontSize: '1.5rem' }}>Welcome To </span></div>
+                <div className="flex justify-center "> <span style={{color: '#000070' , fontFamily: "'Archivo Black', sans-serif", fontSize: '1.5rem' }}>ELECTRONIK<span style={{color: '#E1862D' , fontFamily: "'Archivo Black', sans-serif", fontSize: '1.5rem' }}>HUB</span></span></div>
             </div>
             </div>
                
