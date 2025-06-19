@@ -208,7 +208,7 @@ handleMenuToggle(user.id);
   {openMenuId === user.id && menuPosition && (
  <div
 ref={menuDropdownRef}
-className="fixed z-50 w-32 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5"
+className="fixed z-50 w-32 rounded-md shadow-lg text-gray-900 dark:text-gray-900 bg-white ring-1 ring-black ring-opacity-5"
 style={{
   left: menuPosition.left,
   top: menuPosition.top,

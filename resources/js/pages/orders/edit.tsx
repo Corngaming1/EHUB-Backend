@@ -244,6 +244,7 @@ export default function EditOrder({
                     value={data.grand_total ?? '0.00'}
                     readOnly
                     className="bg-gray-100"
+                    style={{ color: 'black' }}
                   />
                 </div>
 

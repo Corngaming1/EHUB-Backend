@@ -196,7 +196,7 @@ export default function EditProduct({
                       id="category_id"
                       value={data.category_id}
                       onChange={e => setData('category_id', Number(e.target.value))}
-                      className="block w-full rounded border px-3 py-2"
+                      className="block w-full rounded dark:bg-black border px-3 py-2"
                     >
                       <option value="">Select category</option>
                       {categories.map(c => (
@@ -215,7 +215,7 @@ export default function EditProduct({
                       id="brand_id"
                       value={data.brand_id}
                       onChange={e => setData('brand_id', Number(e.target.value))}
-                      className="block w-full rounded border px-3 py-2"
+                      className="block w-full rounded border dark:bg-black px-3 py-2"
                     >
                       <option value="">Select brand</option>
                       {brands.map(b => (
@@ -278,6 +278,44 @@ export default function EditProduct({
                     />
                     {errors.images && <p className="text-red-600 mt-1">{errors.images}</p>}
                   </div>
+
+                  <div className="col-span-2 md:col-span-1 flex flex-col gap-2 mt-6">
+                        <label className="flex items-center gap-2">
+                          <input
+                            type="checkbox"
+                            checked={data.in_stock}
+                            onChange={(e) => setData('in_stock', e.target.checked)}
+                          />
+                          <span>In Stock</span>
+                        </label>
+
+                        <label className="flex items-center gap-2">
+                          <input
+                            type="checkbox"
+                            checked={data.is_active}
+                            onChange={(e) => setData('is_active', e.target.checked)}
+                          />
+                          <span>Active</span>
+                        </label>
+
+                        <label className="flex items-center gap-2">
+                          <input
+                            type="checkbox"
+                            checked={data.is_featured}
+                            onChange={(e) => setData('is_featured', e.target.checked)}
+                          />
+                          <span>Featured</span>
+                        </label>
+
+                        <label className="flex items-center gap-2">
+                          <input
+                            type="checkbox"
+                            checked={data.on_sale}
+                            onChange={(e) => setData('on_sale', e.target.checked)}
+                          />
+                          <span>On Sale</span>
+                        </label>
+                      </div>
 
                   {/* Submit */}
                   <div className="col-span-2 flex justify-end">

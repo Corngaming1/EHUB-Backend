@@ -179,7 +179,7 @@ export default function OrdersCreate() {
                   </div>
 
                   {/* Grand Total */}
-                  <div className="col-span-2 md:col-span-1">
+                  <div className="col-span-2 text-current md:col-span-1">
                     <Label htmlFor="grand_total">Grand Total</Label>
                     <Input
                       type="text"
@@ -187,6 +187,7 @@ export default function OrdersCreate() {
                       value={data.grand_total}
                       readOnly
                       className="bg-gray-100"
+                      style={{ color: 'black' }}
                     />
                   </div>
 
