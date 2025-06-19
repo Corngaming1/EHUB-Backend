@@ -25,7 +25,7 @@ type PageProps = {
 
 
 type Product = {
-  in_stock: any;
+  in_stock: boolean;
   id: number;
   name: string;
   image: string | null;

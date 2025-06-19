@@ -6,7 +6,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { type BreadcrumbItem } from '@/types';
 
 type Product = {
-  quantity: any;
+  quantity: number;
   id: number;
   name: string;
   slug: string;

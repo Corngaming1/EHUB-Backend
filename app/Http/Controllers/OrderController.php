@@ -247,6 +247,13 @@ public function update(Request $request, $id)
      */
     public function destroy(Order $order)
     {
+         foreach ($order->items as $item) {
+        $product = $item->product;
+        if ($product) {
+            $product->quantity += $item->quantity;
+            $product->save();
+        }
+        }
         $order->delete();
 
         return redirect()->route('orders.index')->with('success', 'Order deleted successfully.');
