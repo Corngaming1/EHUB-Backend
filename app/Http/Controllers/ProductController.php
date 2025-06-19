@@ -29,6 +29,7 @@ class ProductController extends Controller
                 'is_active' => $product->is_active,
                 'is_featured' => $product->is_featured,
                 'on_sale' => $product->on_sale,
+                'quantity' => $product->quantity,
             ];
         });
 
@@ -65,6 +66,7 @@ class ProductController extends Controller
             'is_active' => 'boolean',
             'is_featured' => 'boolean',
             'on_sale' => 'boolean',
+            'quantity' => 'required|integer|min:0',
         ]);
 
         $imagePaths = [];
@@ -105,6 +107,7 @@ class ProductController extends Controller
                 'on_sale' => $product->on_sale,
                 'created_at' => $product->created_at,
                 'updated_at' => $product->updated_at,
+                'quantity' => $product->quantity,
             ],
         ]);
     }
@@ -131,6 +134,7 @@ class ProductController extends Controller
                 'is_active' => $product->is_active,
                 'is_featured' => $product->is_featured,
                 'on_sale' => $product->on_sale,
+                'quantity' => $product->quantity,
             ],
                 'categories' => \App\Models\Category::all(['id', 'name']),  // <-- add this
                  'brands' => \App\Models\Brand::all(['id', 'name']),          // <-- 
@@ -154,6 +158,7 @@ class ProductController extends Controller
             'is_active' => 'boolean',
             'is_featured' => 'boolean',
             'on_sale' => 'boolean',
+            'quantity' => 'required|integer|min:0',
         ]);
 
         // If new images are uploaded, remove all old images from storage and replace

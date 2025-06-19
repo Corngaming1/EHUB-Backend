@@ -35,6 +35,7 @@ export default function CreateProduct({ categories = [], brands = [] }: CreatePr
     is_active: boolean;
     is_featured: boolean;
     on_sale: boolean;
+    quantity: number | '';
   }>({
     name: '',
     slug: '',
@@ -47,6 +48,7 @@ export default function CreateProduct({ categories = [], brands = [] }: CreatePr
     is_active: true,
     is_featured: false,
     on_sale: false,
+    quantity: '',
   });
 
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
@@ -176,6 +178,20 @@ export default function CreateProduct({ categories = [], brands = [] }: CreatePr
                       step="1.0"
                     />
                     {errors.price && <p className="text-red-600 mt-1">{errors.price}</p>}
+                  </div>
+
+                  <div className="col-span-2 md:col-span-1">
+                    <Label htmlFor="quantity">Quantity In Stock</Label>
+                    <Input
+                      type="number"
+                      id="quantity"
+                      placeholder="Quantity"
+                      value={data.quantity}
+                      onChange={e => setData('quantity', e.target.value === '' ? '' : Number(e.target.value))}
+                      min={0}
+                      required
+                    />
+                    {errors.quantity && <p className="text-red-600 mt-1">{errors.quantity}</p>}
                   </div>
 
                   <div className="col-span-2 md:col-span-1">

@@ -28,6 +28,7 @@ type Product = {
   images?: string[];
   category_id?: number;
   brand_id?: number;
+  quantity: number | '';
 };
 
 type Category = { id: number; name: string };
@@ -61,6 +62,7 @@ export default function EditProduct({
   }, [selectedImages]);
 
   const { data, setData, processing, errors } = useForm<{
+    quantity: string | number | undefined;
     name: string;
     slug: string;
     price: string;
@@ -81,6 +83,7 @@ export default function EditProduct({
     on_sale: !!product.on_sale,
     category_id: product.category_id ?? '',
     brand_id: product.brand_id ?? '',
+    quantity: product.quantity ?? '',
   });
 
   function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
@@ -104,6 +107,7 @@ export default function EditProduct({
     formData.append('on_sale', data.on_sale ? '1' : '0');
     formData.append('category_id', data.category_id ? String(data.category_id) : '');
     formData.append('brand_id', data.brand_id ? String(data.brand_id) : '');
+    formData.append('quantity', data.quantity !== '' ? String(data.quantity) : '0');
 
     selectedImages.forEach((file, index) => {
       formData.append(`images[${index}]`, file);
@@ -169,6 +173,20 @@ export default function EditProduct({
                       className={errors.price ? 'border-red-600' : ''}
                     />
                     {errors.price && <p className="text-red-600 mt-1">{errors.price}</p>}
+                  </div>
+
+                  <div className="col-span-2 md:col-span-1">
+                    <Label htmlFor="quantity">Quantity In Stock</Label>
+                    <Input
+                      type="number"
+                      id="quantity"
+                      placeholder="Quantity"
+                      value={data.quantity}
+                      onChange={e => setData('quantity', e.target.value === '' ? '' : Number(e.target.value))}
+                      min={0}
+                      required
+                    />
+                    {errors.quantity && <p className="text-red-600 mt-1">{errors.quantity}</p>}
                   </div>
 
                   {/* Category */}

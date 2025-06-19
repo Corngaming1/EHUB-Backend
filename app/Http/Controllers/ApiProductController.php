@@ -19,6 +19,8 @@ class ApiProductController extends Controller
         return [
             'id' => $product->id,
             'name' => $product->name,
+            'quantity' => $product->quantity,
+            'price' => $product->price,
             
         ];
     });

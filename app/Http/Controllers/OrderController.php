@@ -29,6 +29,18 @@ class OrderController extends Controller
                 'user' => $order->user ? $order->user->only(['id', 'name']) : null,
                 'created_at' => $order->created_at,
                 'updated_at' => $order->updated_at,
+                 'items' => $order->items->map(function ($item) {
+                return [
+                    'id' => $item->id,
+                    'product_id' => $item->product_id,
+                    'quantity' => $item->quantity, // <-- Make sure this is included!
+                    // Optionally, include product info:
+                    'product' => $item->product ? [
+                        'id' => $item->product->id,
+                        'name' => $item->product->name,
+                    ] : null,
+                ];
+            }),
             ];
         });
 
@@ -44,7 +56,7 @@ class OrderController extends Controller
     {
         return Inertia::render('orders/create', [
             'users' => User::all(['id', 'name']),
-            'products' => Product::all(['id', 'name', 'price']),
+            'products' => Product::all(['id', 'name', 'price', 'quantity', 'is_active']), // <-- add these
         ]);
     }
 
@@ -79,15 +91,28 @@ class OrderController extends Controller
 
             $order->items()->create([
                 'product_id' => $product->id,
-                'quantity' => $quantity,
+                'quantity' => $itemData['quantity'],
                 'unit_amount' => $price,
             ]);
 
             $grandTotal += $price * $quantity;
+             // Check if product is active
+                if (!$product->is_active) {
+                    return back()->withErrors(['items' => "Product {$product->name} is not active."]);
+                }
+
+                // Check stock
+                if ($product->quantity < $itemData['quantity']) {
+                    return back()->withErrors(['items' => "Only {$product->quantity} of {$product->name} available."]);
+                }
         }
 
         // Update grand total
         $order->grand_total = $grandTotal;
+            // Subtract the ordered quantity from product stock
+        $product->quantity -= $itemData['quantity'];
+        $product->save();
+
         $order->save();
 
         return redirect()->route('orders.index')->with('success', 'Order created successfully.');
@@ -146,7 +171,7 @@ class OrderController extends Controller
                 'user_id' => $order->user_id,
             ],
             'users' => User::all(['id', 'name']),
-            'products' => Product::all(['id', 'name', 'price']),
+            'products' => Product::all(['id', 'name', 'price', 'quantity', 'is_active']),
         ]);
     }
 
@@ -194,7 +219,22 @@ public function update(Request $request, $id)
             'quantity' => $quantity,
             'unit_amount' => $unitAmount,
         ]);
+
+           // Check if product is active
+            if (!$product->is_active) {
+                return back()->withErrors(['items' => "Product {$product->name} is not active."]);
+            }
+
+            // Check stock
+            if ($product->quantity < $itemData['quantity']) {
+                return back()->withErrors(['items' => "Only {$product->quantity} of {$product->name} available."]);
+            }
     }
+
+
+        // Subtract the ordered quantity from product stock
+    $product->quantity -= $itemData['quantity'];
+    $product->save();
 
     $order->update(['grand_total' => $grandTotal]);
 

@@ -14,7 +14,7 @@ const breadcrumbs: BreadcrumbItem[] = [
   },
 ];
 
-type Product = { id: number; name: string; price: number };
+type Product = { id: number; name: string; price: number; quantity: number; is_active?: boolean };
 type PageProps = { users: User[]; products: Product[] };
 
 export default function OrdersCreate() {
@@ -59,13 +59,17 @@ export default function OrdersCreate() {
     const newItems = [...data.items];
     newItems[index].product_id = productId;
     newItems[index].price = product.price;
+    // Reset quantity to 1 if new product has less stock than current quantity
+    newItems[index].quantity = Math.min(newItems[index].quantity, product.quantity) || 1;
     setData('items', newItems);
   }
 
   // Handle quantity change in an item
   function handleQuantityChange(index: number, quantity: number) {
+    const selectedProduct = products.find(p => String(p.id) === data.items[index].product_id);
+    const maxQty = selectedProduct ? selectedProduct.quantity : 1;
     const newItems = [...data.items];
-    newItems[index].quantity = quantity > 0 ? quantity : 1;
+    newItems[index].quantity = Math.max(1, Math.min(quantity, maxQty));
     setData('items', newItems);
   }
 
@@ -126,33 +130,49 @@ export default function OrdersCreate() {
                   {/* Order Items */}
                   <div className="col-span-2">
                     <Label>Products</Label>
-                    {data.items.map((item, index) => (
-                      <div key={index} className="flex gap-2 mb-3 items-center">
-                        <select
-                          value={item.product_id}
-                          onChange={e => handleProductChange(index, e.target.value)}
-                          className="border rounded px-3 py-2 flex-grow"
-                          required
-                        >
-                          {products.map(product => (
-                            <option key={product.id} value={product.id}>
-                              {product.name} (₱{product.price})
-                            </option>
-                          ))}
-                        </select>
-                        <Input
-                          type="number"
-                          min={1}
-                          value={item.quantity}
-                          onChange={e => handleQuantityChange(index, Number(e.target.value))}
-                          className="w-24"
-                          required
-                        />
-                        <Button type="button" variant="destructive" onClick={() => removeItem(index)}>
-                          Remove
-                        </Button>
-                      </div>
-                    ))}
+                    {data.items.map((item, index) => {
+                      const selectedProduct = products.find(p => String(p.id) === item.product_id);
+                      return (
+                        <div key={index} className="flex gap-2 mb-3 items-center">
+                          <select
+                            value={item.product_id}
+                            onChange={e => handleProductChange(index, e.target.value)}
+                            className="border rounded px-3 py-2 flex-grow"
+                            required
+                          >
+                            {products.map(product => (
+                              <option
+                                key={product.id}
+                                value={product.id}
+                                disabled={product.quantity === 0 || product.is_active === false}
+                              >
+                                {product.name} (₱{product.price}) - {product.quantity} in stock
+                                {!product.is_active ? ' [Inactive]' : ''}
+                              </option>
+                            ))}
+                          </select>
+                          <Input
+                            type="number"
+                            min={1}
+                            max={selectedProduct?.quantity ?? 1}
+                            value={item.quantity}
+                            disabled={!selectedProduct || selectedProduct.quantity === 0 || selectedProduct.is_active === false}
+                            onChange={e => handleQuantityChange(index, Number(e.target.value))}
+                            className="w-24"
+                            required
+                          />
+                          {selectedProduct && selectedProduct.quantity === 0 && (
+                            <span className="text-red-600 text-xs ml-2">Out of stock</span>
+                          )}
+                          {selectedProduct && selectedProduct.is_active === false && (
+                            <span className="text-yellow-600 text-xs ml-2">Inactive</span>
+                          )}
+                          <Button type="button" variant="destructive" onClick={() => removeItem(index)}>
+                            Remove
+                          </Button>
+                        </div>
+                      );
+                    })}
                     <Button type="button" onClick={addItem} className="mb-4">
                       Add Product
                     </Button>
@@ -182,7 +202,6 @@ export default function OrdersCreate() {
                       <option value="COD" style={{ color: 'black' }}>
                         COD
                       </option>
-                      {/* Add more options if needed */}
                     </select>
                   </div>
                   <div className="col-span-2 md:col-span-1">
@@ -233,7 +252,6 @@ export default function OrdersCreate() {
                       <option value="failed" style={{ color: 'black' }}>
                         Failed
                       </option>
-                      {/* Add more statuses if you have */}
                     </select>
                   </div>
                   <div className="col-span-2 md:col-span-1">

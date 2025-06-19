@@ -6,6 +6,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { type BreadcrumbItem } from '@/types';
 
 type Product = {
+  quantity: any;
   id: number;
   name: string;
   slug: string;
@@ -108,6 +109,14 @@ export default function Show() {
                   <StatusBadge label="Active" active={product.is_active} />
                   <StatusBadge label="Featured" active={product.is_featured} />
                   <StatusBadge label="On Sale" active={product.on_sale} />
+                </div>
+                <div className="mb-2">
+                  <strong>In Stock:</strong>{' '}
+                  {typeof product.quantity === 'number'
+                    ? `${product.quantity} in stock`
+                    : product.in_stock
+                      ? 'In Stock'
+                      : 'Out of Stock'}
                 </div>
                 <div className="text-sm text-gray-500 mt-4">
                   <div>Created at: {new Date(product.created_at).toLocaleString()}</div>

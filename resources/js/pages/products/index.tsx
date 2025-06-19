@@ -25,6 +25,7 @@ type PageProps = {
 
 
 type Product = {
+  in_stock: any;
   id: number;
   name: string;
   image: string | null;
@@ -32,6 +33,7 @@ type Product = {
   brand: { id: number; name: string } | null;
   is_active: boolean;
   price?: number;
+  quantity?: number;
 };
 
 type ProductsPageProps = PageProps & {
@@ -182,6 +184,8 @@ export default function ProductsIndex() {
                     <TableHead>Category</TableHead>
                     <TableHead>Brand</TableHead>
                     <TableHead>Price</TableHead>
+                    <TableHead>In Stock</TableHead>
+                    <TableHead>Quantity</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead>Action</TableHead>
                   </TableRow>
@@ -204,6 +208,16 @@ export default function ProductsIndex() {
                           <span>₱{product.price}</span>
                         ) : (
                           <span className="text-gray-400">No price</span>
+                        )}
+                      </TableCell>
+                       <TableCell>
+                          {typeof product.quantity === 'number' ? product.quantity : 0}
+                        </TableCell>
+                         <TableCell>
+                        {product.quantity && product.quantity > 0 ? (
+                          <span className="text-green-600 font-semibold">In Stock</span>
+                        ) : (
+                          <span className="text-red-600 font-semibold">Out of Stock</span>
                         )}
                       </TableCell>
                       <TableCell>
