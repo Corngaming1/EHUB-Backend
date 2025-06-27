@@ -1,17 +1,14 @@
 <?php
 
-
 namespace App\Http\Controllers;
 
 use App\Models\Product;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Response;
 use Inertia\Inertia;
 
 class ProductController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
     public function index()
     {
         $products = Product::with(['category', 'brand'])->get()->map(function ($product) {
@@ -21,10 +18,9 @@ class ProductController extends Controller
                 'slug' => $product->slug,
                 'description' => $product->description,
                 'price' => $product->price,
-                // Return images as array of URLs
-                'images' => $product->images ? array_map(fn($img) => asset('storage/' . $img), $product->images) : [],
-                'category' => $product->category ? $product->category->only('id', 'name') : null,
-                'brand' => $product->brand ? $product->brand->only('id', 'name') : null,
+                'images' => $product->images ?? [],
+                'category' => $product->category?->only('id', 'name'),
+                'brand' => $product->brand?->only('id', 'name'),
                 'in_stock' => $product->in_stock,
                 'is_active' => $product->is_active,
                 'is_featured' => $product->is_featured,
@@ -38,9 +34,6 @@ class ProductController extends Controller
         ]);
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
     public function create()
     {
         return Inertia::render('products/create', [
@@ -49,9 +42,6 @@ class ProductController extends Controller
         ]);
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
     public function store(Request $request)
     {
         $validated = $request->validate([
@@ -69,23 +59,20 @@ class ProductController extends Controller
             'quantity' => 'required|integer|min:0',
         ]);
 
-        $imagePaths = [];
+        $imagesBase64 = [];
         if ($request->hasFile('images')) {
             foreach ($request->file('images') as $image) {
-                $imagePaths[] = $image->store('products', 'public');
+                $imagesBase64[] = base64_encode(file_get_contents($image));
             }
         }
 
-        $validated['images'] = $imagePaths;
+        $validated['images'] = $imagesBase64;
 
         Product::create($validated);
 
         return redirect()->route('products.index')->with('success', 'Product created successfully.');
     }
 
-    /**
-     * Display the specified resource.
-     */
     public function show(Product $product)
     {
         $product->load(['category', 'brand']);
@@ -97,10 +84,9 @@ class ProductController extends Controller
                 'slug' => $product->slug,
                 'description' => $product->description,
                 'price' => $product->price,
-                // Return images as array of URLs
-                'images' => $product->images ? array_map(fn($img) => asset('storage/' . $img), $product->images) : [],
-                'category' => $product->category ? $product->category->only('id', 'name') : null,
-                'brand' => $product->brand ? $product->brand->only('id', 'name') : null,
+                'images' => $product->images ?? [],
+                'category' => $product->category?->only('id', 'name'),
+                'brand' => $product->brand?->only('id', 'name'),
                 'in_stock' => $product->in_stock,
                 'is_active' => $product->is_active,
                 'is_featured' => $product->is_featured,
@@ -112,9 +98,6 @@ class ProductController extends Controller
         ]);
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     */
     public function edit(Product $product)
     {
         $product->load(['category', 'brand']);
@@ -126,8 +109,7 @@ class ProductController extends Controller
                 'slug' => $product->slug,
                 'description' => $product->description,
                 'price' => $product->price,
-                // Return images as array of URLs
-                'images' => $product->images ? array_map(fn($img) => asset('storage/' . $img), $product->images) : [],
+                'images' => $product->images ?? [],
                 'category_id' => $product->category_id,
                 'brand_id' => $product->brand_id,
                 'in_stock' => $product->in_stock,
@@ -136,14 +118,11 @@ class ProductController extends Controller
                 'on_sale' => $product->on_sale,
                 'quantity' => $product->quantity,
             ],
-                'categories' => \App\Models\Category::all(['id', 'name']),  // <-- add this
-                 'brands' => \App\Models\Brand::all(['id', 'name']),          // <-- 
+            'categories' => \App\Models\Category::all(['id', 'name']),
+            'brands' => \App\Models\Brand::all(['id', 'name']),
         ]);
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
     public function update(Request $request, Product $product)
     {
         $validated = $request->validate([
@@ -161,25 +140,13 @@ class ProductController extends Controller
             'quantity' => 'required|integer|min:0',
         ]);
 
-        // If new images are uploaded, remove all old images from storage and replace
         if ($request->hasFile('images')) {
-            // Delete all old images
-            if (is_array($product->images)) {
-                foreach ($product->images as $img) {
-                    // Remove 'storage/' from asset() URL if needed
-                    $imgPath = str_replace(asset('storage/'), '', $img);
-                    \Storage::disk('public')->delete($imgPath);
-                }
-            }
-
-            // Save new images
-            $imagePaths = [];
+            $imagesBase64 = [];
             foreach ($request->file('images') as $image) {
-                $imagePaths[] = $image->store('products', 'public');
+                $imagesBase64[] = base64_encode(file_get_contents($image));
             }
-            $validated['images'] = $imagePaths;
+            $validated['images'] = $imagesBase64;
         } else {
-            // If no new images, keep the old ones
             $validated['images'] = $product->images ?? [];
         }
 
@@ -188,21 +155,28 @@ class ProductController extends Controller
         return redirect()->route('products.index')->with('success', 'Product updated successfully.');
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
     public function destroy(Product $product)
     {
-        // Delete all images from storage
-        if (is_array($product->images)) {
-            foreach ($product->images as $img) {
-                $imgPath = str_replace(asset('storage/'), '', $img);
-                \Storage::disk('public')->delete($imgPath);
-            }
-        }
-
         $product->delete();
 
         return redirect()->route('products.index')->with('success', 'Product deleted successfully.');
+    }
+
+    // ✅ NEW: Serve base64 image via API
+    public function image($id, $index = 0)
+    {
+        $product = Product::findOrFail($id);
+        $images = $product->images ?? [];
+
+        if (!isset($images[$index])) {
+            return response()->json(['message' => 'Image not found'], 404);
+        }
+
+        $imageData = base64_decode($images[$index]);
+
+        return Response::make($imageData, 200, [
+            'Content-Type' => 'image/jpeg',
+            'Content-Disposition' => 'inline; filename="product_' . $id . '_img' . $index . '.jpg"',
+        ]);
     }
 }
