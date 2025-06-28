@@ -10,7 +10,7 @@ class ApiProductController extends Controller
     /**
      * Display a listing of the resource.
      */
-   public function index(Request $request)
+    public function index(Request $request)
 {
     $query = Product::with(['category', 'brand']);
 
@@ -41,21 +41,22 @@ class ApiProductController extends Controller
             'stock' => $product->quantity,
             'price' => $product->price,
             'category' => $product->category,
-            'image' => is_array($product->images) && count($product->images)
-                ? 'data:image/*;base64,' . $product->images[0]
-                : null,
+            'images' => is_array($product->images)
+                ? array_map(fn($img) => 'data:image/*;base64,' . $img, $product->images)
+                : [],
         ];
     });
 
     return response()->json($products);
 }
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(Request $request)
-    {
-        //
-    }
+
+/**
+ * Store a newly created resource in storage.
+ */
+public function store(Request $request)
+{
+    //
+}
 
     /**
      * Display the specified product.
@@ -70,9 +71,10 @@ class ApiProductController extends Controller
             'description' => $product->description,
             'stock' => $product->quantity,
             'price' => $product->price,
-            'image' => is_array($product->images) && count($product->images)
-                ? 'data:image/*;base64,' . $product->images[0]
-                : null,
+            'images' => is_array($product->images)
+    ? array_map(fn($img) => 'data:image/*;base64,' . $img, $product->images)
+    : [],
+
         ]);
     }
 
