@@ -186,8 +186,7 @@ export default function OrdersCreate() {
                       id="grand_total"
                       value={data.grand_total}
                       readOnly
-                      className="bg-gray-100"
-                      style={{ color: 'black' }}
+                      className="w-full border rounded px-3 py-2"
                     />
                   </div>
 
@@ -262,8 +261,7 @@ export default function OrdersCreate() {
                       id="currency"
                       value={data.currency}
                       readOnly
-                      className="bg-gray-100"
-                      style={{ color: 'black' }}
+                      className="w-full border rounded px-3 py-2"
                     />
                   </div>
                   <div className="col-span-2 md:col-span-1">

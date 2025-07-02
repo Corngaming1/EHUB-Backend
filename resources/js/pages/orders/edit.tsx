@@ -243,8 +243,7 @@ export default function EditOrder({
                     id="grand_total"
                     value={data.grand_total ?? '0.00'}
                     readOnly
-                    className="bg-gray-100"
-                    style={{ color: 'black' }}
+                    className="w-full border rounded px-3 py-2"
                   />
                 </div>
 
@@ -258,7 +257,9 @@ export default function EditOrder({
                     className="w-full border rounded px-3 py-2"
                     required
                   >
-                    <option value="COD">COD</option>
+                    <option value="COD" style={{ color: 'black' }}>
+                        COD
+                      </option>
                   </select>
                   {errors.payment_method && (
                     <p className="text-red-600">{errors.payment_method}</p>
@@ -278,11 +279,21 @@ export default function EditOrder({
                     className="w-full border rounded px-3 py-2"
                     required
                   >
-                    <option value="new">New</option>
-                    <option value="processing">Processing</option>
-                    <option value="shipped">Shipped</option>
-                    <option value="delivered">Delivered</option>
-                    <option value="canceled">Canceled</option>
+                     <option value="new" style={{ color: 'black' }}>
+                        New
+                      </option>
+                      <option value="processing" style={{ color: 'black' }}>
+                        Processing
+                      </option>
+                      <option value="shipped" style={{ color: 'black' }}>
+                        Shipped
+                      </option>
+                      <option value="delivered" style={{ color: 'black' }}>
+                        Delivered
+                      </option>
+                      <option value="canceled" style={{ color: 'black' }}>
+                        Canceled
+                      </option>
                   </select>
                   {errors.status && <p className="text-red-600">{errors.status}</p>}
                 </div>
@@ -290,18 +301,25 @@ export default function EditOrder({
                 {/* Payment Status */}
                 <div className="col-span-2 md:col-span-1">
                   <Label htmlFor="payment_status">Payment Status</Label>
-                  <select
-                    id="payment_status"
-                    value={data.payment_status}
-                    onChange={(e) => setData('payment_status', e.target.value)}
-                    className="w-full border rounded px-3 py-2"
-                    required
-                  >
-                    <option value="new">New</option>
-                    <option value="paid">Paid</option>
-                    <option value="pending">Pending</option>
-                    <option value="failed">Failed</option>
-                  </select>
+                   <select
+                      id="payment_status"
+                      value={data.payment_status}
+                      onChange={e => setData('payment_status', e.target.value)}
+                      className="w-full border rounded px-3 py-2"
+                    >
+                      <option value="new" style={{ color: 'black' }}>
+                        New
+                      </option>
+                      <option value="paid" style={{ color: 'black' }}>
+                        Paid
+                      </option>
+                      <option value="pending" style={{ color: 'black' }}>
+                        Pending
+                      </option>
+                      <option value="failed" style={{ color: 'black' }}>
+                        Failed
+                      </option>
+                    </select>
                   {errors.payment_status && (
                     <p className="text-red-600">{errors.payment_status}</p>
                   )}
@@ -315,8 +333,7 @@ export default function EditOrder({
                     id="currency"
                     value={data.currency}
                     readOnly
-                    className="bg-gray-100"
-                    style={{ color: 'black' }}
+                    className="w-full border rounded px-3 py-2"
                   />
                 </div>
 
@@ -326,6 +343,7 @@ export default function EditOrder({
                   <Input
                     type="number"
                     id="shipping_amount"
+                    className="w-full border rounded px-3 py-2"
                     value={data.shipping_amount}
                     onChange={(e) =>
                       setData('shipping_amount', Number(e.target.value))
@@ -347,8 +365,12 @@ export default function EditOrder({
                     onChange={(e) => setData('shipping_method', e.target.value)}
                     className="w-full border rounded px-3 py-2"
                   >
-                    <option value="for_Pickup">For Pickup</option>
-                    <option value="j&t">J&T</option>
+                    <option value="for_Pickup" style={{ color: 'black' }}>
+                        For Pickup
+                      </option>
+                      <option value="j&t" style={{ color: 'black' }}>
+                        J&T
+                      </option>
                   </select>
                   {errors.shipping_method && (
                     <p className="text-red-600">{errors.shipping_method}</p>

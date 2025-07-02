@@ -201,11 +201,11 @@ export default function CreateProduct({ categories = [], brands = [] }: CreatePr
                       value={data.category_id}
                       onChange={e => setData('category_id', Number(e.target.value))}
                       required
-                      className="w-full border rounded p-2"
+                      className="w-full border rounded px-3 py-2"
                     >
                       <option value="">Select Category</option>
                       {(categories || []).map(cat => (
-                        <option key={cat.id} value={cat.id}>{cat.name}</option>
+                        <option key={cat.id} value={cat.id} style={{ color: 'black' }}>{cat.name}</option>
                       ))}
                     </select>
                     {errors.category_id && <p className="text-red-600 mt-1">{errors.category_id}</p>}
@@ -217,11 +217,11 @@ export default function CreateProduct({ categories = [], brands = [] }: CreatePr
                       id="brand_id"
                       value={data.brand_id}
                       onChange={e => setData('brand_id', Number(e.target.value))}
-                      className="w-full border rounded p-2"
+                       className="w-full border rounded px-3 py-2"
                     >
                       <option value="">Select Brand</option>
                       {(brands || []).map(brand => (
-                        <option key={brand.id} value={brand.id}>{brand.name}</option>
+                        <option key={brand.id} value={brand.id} style={{ color: 'black' }}>{brand.name}</option>
                       ))}
                     </select>
                     {errors.brand_id && <p className="text-red-600 mt-1">{errors.brand_id}</p>}

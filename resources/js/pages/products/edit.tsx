@@ -127,12 +127,14 @@ export default function EditProduct({
         <div className="rounded border p-6 shadow-xl w-full max-w-2xl">
           <div className="mb-6 flex items-center justify-between">
             <h1 className="text-2xl font-semibold">Edit Product</h1>
-            <Link
-              href="/products"
-              className="rounded bg-gray-200 px-4 py-2 text-gray-700 hover:bg-gray-300"
-            >
-              Back
-            </Link>
+             <Link href="/products">
+                  <Button
+                     variant="outline"
+                       className="aspect-square max-sm:p-0 cursor-pointer bg-blue-600 hover:bg-blue-700 text-white"
+                       >
+                       Back To Products
+                   </Button>
+              </Link>
           </div>
           <Card>
             <CardContent>
@@ -196,11 +198,11 @@ export default function EditProduct({
                       id="category_id"
                       value={data.category_id}
                       onChange={e => setData('category_id', Number(e.target.value))}
-                      className="block w-full rounded dark:bg-black border px-3 py-2"
+                      className="w-full border rounded px-3 py-2"
                     >
-                      <option value="">Select category</option>
+                      <option value=""style={{ color: 'black' }}>Select category</option>
                       {categories.map(c => (
-                        <option key={c.id} value={c.id}>
+                        <option key={c.id} value={c.id} style={{ color: 'black' }}>
                           {c.name}
                         </option>
                       ))}
@@ -215,11 +217,11 @@ export default function EditProduct({
                       id="brand_id"
                       value={data.brand_id}
                       onChange={e => setData('brand_id', Number(e.target.value))}
-                      className="block w-full rounded border dark:bg-black px-3 py-2"
+                      className="w-full border rounded px-3 py-2"
                     >
-                      <option value="">Select brand</option>
+                      <option value="" style={{ color: 'black' }}>Select brand</option>
                       {brands.map(b => (
-                        <option key={b.id} value={b.id}>
+                        <option key={b.id} value={b.id} style={{ color: 'black' }}>
                           {b.name}
                         </option>
                       ))}

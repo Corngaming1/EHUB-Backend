@@ -72,9 +72,9 @@ export default function Show() {
               <div>
                 <strong>User:</strong>{' '}
                 {order.user ? (
-                  <Link href={`/users/${order.user.id}`} className="text-blue-600 hover:underline">
-                    {order.user.name}
-                  </Link>
+                 <Link href={`/users/${order.user.id}/edit`} className="text-blue-600 hover:underline">
+                  {order.user.name}
+                </Link>
                 ) : (
                   <span className="text-gray-400">No user assigned</span>
                 )}
@@ -132,38 +132,41 @@ export default function Show() {
           <CardContent>
             <h2 className="text-xl font-semibold mb-4">Products</h2>
             {order.items && order.items.length > 0 ? (
-              <table className="w-full table-auto border-collapse border border-gray-300">
-                <thead>
-                  <tr className="bg-gray-100">
-                    <th className="border border-gray-300 px-4 py-2 text-left">Product Name</th>
-                    <th className="border border-gray-300 px-4 py-2 text-right">Quantity</th>
-                    <th className="border border-gray-300 px-4 py-2 text-right">Unit Price</th>
-                    <th className="border border-gray-300 px-4 py-2 text-right">Total Price</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {order.items.map((item) => (
-                    <tr key={item.id} className="hover:bg-gray-50">
-                      <td className="border border-gray-300 px-4 py-2">
-                        {item.product ? (
-                          <Link href={`/products/${item.product.id}`} className="text-blue-600 hover:underline">
-                            {item.product.name}
-                          </Link>
-                        ) : (
-                          'Unknown Product'
-                        )}
-                      </td>
-                      <td className="border border-gray-300 px-4 py-2 text-right">{item.quantity}</td>
-                      <td className="border border-gray-300 px-4 py-2 text-right">
-                        {order.currency} {Number(item.unit_amount).toFixed(2)}
-                      </td>
-                      <td className="border border-gray-300 px-4 py-2 text-right">
-                        {order.currency} {(item.unit_amount * item.quantity).toFixed(2)}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+     <table className="w-full table-auto border-collapse border border-gray-300 text-gray-900 dark:text-white">
+  <thead>
+    <tr className="bg-gray-100 dark:bg-black">
+      <th className="border border-gray-300 px-4 py-2 text-left">Product Name</th>
+      <th className="border border-gray-300 px-4 py-2 text-right">Quantity</th>
+      <th className="border border-gray-300 px-4 py-2 text-right">Unit Price</th>
+      <th className="border border-gray-300 px-4 py-2 text-right">Total Price</th>
+    </tr>
+  </thead>
+  <tbody className="bg-white dark:bg-black">
+    {order.items.map((item) => (
+      <tr
+        key={item.id}
+        className="hover:bg-gray-50 dark:hover:bg-gray-700"
+      >
+        <td className="border border-gray-300 px-4 py-2 dark:text-white">
+          {item.product ? (
+            <Link href={`/products/${item.product.id}`} className="text-blue-600 hover:underline">
+              {item.product.name}
+            </Link>
+          ) : (
+            'Unknown Product'
+          )}
+        </td>
+        <td className="border border-gray-300 px-4 py-2 text-right dark:text-white">{item.quantity}</td>
+        <td className="border border-gray-300 px-4 py-2 text-right dark:text-white">
+          {order.currency} {Number(item.unit_amount).toFixed(2)}
+        </td>
+        <td className="border border-gray-300 px-4 py-2 text-right dark:text-white">
+          {order.currency} {(item.unit_amount * item.quantity).toFixed(2)}
+        </td>
+      </tr>
+    ))}
+  </tbody>
+</table>
             ) : (
               <p className="text-gray-500">No products found for this order.</p>
             )}
