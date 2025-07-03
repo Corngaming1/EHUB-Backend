@@ -36,9 +36,17 @@ type Product = {
   quantity?: number;
 };
 
-type ProductsPageProps = PageProps & {
-  products: Product[];
+type PaginatedProducts = {
+  data: Product[];
+  links: { url: string | null; label: string; active: boolean }[];
+  meta: { current_page: number; last_page: number; };
 };
+
+type ProductsPageProps = PageProps & {
+  products: PaginatedProducts;
+};
+
+
 
 const breadcrumbs: BreadcrumbItem[] = [
   {
@@ -56,18 +64,21 @@ export default function ProductsIndex() {
   const [menuPosition, setMenuPosition] = useState<{ left: number; top: number } | null>(null);
   const buttonRefs = useRef<{ [key: number]: HTMLButtonElement | null }>({});
   const menuDropdownRef = useRef<HTMLDivElement | null>(null);
+  
 
   const suggestions = search
-    ? products.filter(product =>
+    ? products.data.filter(product =>
         product.name.toLowerCase().includes(search.toLowerCase())
       )
     : [];
 
   const filteredProducts = selected
-    ? products.filter(product => product.id === selected.id)
-    : search
-    ? suggestions
-    : products;
+  ? products.data.filter(product => product.id === selected.id)
+  : search
+  ? products.data.filter(product =>
+      product.name.toLowerCase().includes(search.toLowerCase())
+    )
+  : products.data;
 
   function handleSelect(product: Product) {
     setSelected(product);
@@ -287,6 +298,21 @@ export default function ProductsIndex() {
                   ))}
                 </TableBody>
               </Table>
+              {/* Pagination */}
+            <div className="flex justify-center mt-4 gap-1">
+              {products.links.map((link, idx) => (
+                <button
+                  key={idx}
+                  disabled={!link.url}
+                  className={`px-3 py-1 rounded transition 
+                      ${link.active ? 'bg-blue-600 text-white' : 'bg-gray-200 dark:bg-gray-700 dark:text-white'}
+                      ${link.url ? 'hover:bg-blue-500 hover:text-white cursor-pointer' : 'opacity-50 cursor-not-allowed'}
+                    `}
+                  onClick={() => link.url && Inertia.visit(link.url!)}
+                  dangerouslySetInnerHTML={{ __html: link.label }}
+                />
+              ))}
+            </div>
             </CardContent>
           </Card>
         </div>

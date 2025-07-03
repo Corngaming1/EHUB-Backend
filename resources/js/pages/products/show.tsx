@@ -61,17 +61,19 @@ export default function Show() {
                     {product.images.map((img, idx) => (
                       <img
                         key={idx}
-                        src={img.startsWith('http') ? img : `/storage/${img}`}
+                        src={`/products/${product.id}/image/${idx}`}
                         alt={product.name + ' ' + (idx + 1)}
                         className="max-h-48 w-32 object-contain rounded"
+                        loading="lazy"
                       />
                     ))}
                   </div>
                 ) : product.image ? (
                   <img
-                    src={product.image.startsWith('http') ? product.image : `/storage/${product.image}`}
+                    src={`/products/${product.id}/image/0`}
                     alt={product.name}
                     className="max-h-48 w-full object-contain rounded"
+                    loading="lazy"
                   />
                 ) : (
                   <div className="h-48 w-full flex items-center justify-center bg-gray-100 rounded text-gray-400">

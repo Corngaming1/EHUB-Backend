@@ -238,7 +238,7 @@ export default function CreateProduct({ categories = [], brands = [] }: CreatePr
                       {imagePreviews.length > 0 ? (
                         <div className="flex flex-wrap gap-2">
                           {imagePreviews.map((src, idx) => (
-                            <img key={idx} src={src} alt={`Preview ${idx + 1}`} className="max-h-32 mb-2" />
+                            <img key={idx} src={src} alt={`Preview ${idx + 1}`} className="max-h-32 mb-2" loading="lazy"/>
                           ))}
                         </div>
                       ) : (

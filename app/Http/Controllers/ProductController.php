@@ -11,7 +11,10 @@ class ProductController extends Controller
 {
     public function index()
     {
-        $products = Product::with(['category', 'brand'])->get()->map(function ($product) {
+        $products = Product::with(['category', 'brand'])
+        ->orderBy('created_at', 'desc')
+        ->paginate(20)
+        ->through(function ($product) {
             return [
                 'id' => $product->id,
                 'name' => $product->name,
@@ -28,6 +31,7 @@ class ProductController extends Controller
                 'quantity' => $product->quantity,
             ];
         });
+
 
         return Inertia::render('products/index', [
             'products' => $products,

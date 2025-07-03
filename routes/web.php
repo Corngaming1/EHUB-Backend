@@ -34,6 +34,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // Products resource accessible by admin and staff
     Route::middleware('role:admin,staff')->group(function () {
+
+        Route::get('/products/{id}/image/{index?}', [ProductController::class, 'image'])->name('products.image');
+       
         Route::resource('products', ProductController::class);
         Route::resource('brands', BrandController::class);
         Route::resource('categories', CategoryController::class);
@@ -47,6 +50,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
 // API routes
 Route::prefix('api')->middleware('api')->group(function () {
+    Route::get('apiproducts/suggestions', [ApiProductController::class, 'suggestions']);
     Route::apiResource('apiusers', ApiUserController::class);
     Route::apiResource('apicategories', ApiCategoryController::class);
     Route::apiResource('apibrands', ApiBrandController::class);

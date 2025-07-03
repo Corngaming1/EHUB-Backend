@@ -237,9 +237,10 @@ export default function EditProduct({
                         product.images.map((imgUrl, idx) => (
                           <img
                             key={idx}
-                            src={imgUrl}
+                            src={`/products/${product.id}/image/${idx}`}
                             alt={`Existing product image ${idx + 1}`}
                             className="w-24 h-24 object-cover rounded"
+                            loading="lazy"
                           />
                         ))
                       ) : (
@@ -259,6 +260,7 @@ export default function EditProduct({
                             src={url}
                             alt={`Selected image preview ${idx + 1}`}
                             className="w-24 h-24 object-cover rounded"
+                            loading="lazy"
                           />
                         ))
                       ) : (

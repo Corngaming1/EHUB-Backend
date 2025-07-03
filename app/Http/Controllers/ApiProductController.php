@@ -32,15 +32,33 @@ class ApiProductController extends Controller
             $query->orderBy('created_at', 'desc');
             break;
     }
+    if ($request->has('search') && $request->search !== '') {
+        $search = $request->search;
+        $query->where(function ($q) use ($search) {
+            $q->where('name', 'like', "%$search%")
+            ->orWhere('description', 'like', "%$search%");
+        });
+    }
 
-    $products = $query->get()->map(function ($product) {
+    if ($request->has('category') && $request->category !== 'ALL') {
+    $query->whereHas('category', function ($q) use ($request) {
+        $q->where('name', $request->category);
+    });
+}
+
+      $products = $query->paginate(5);
+
+ $products->getCollection()->transform(function ($product) {
         return [
             'id' => $product->id,
             'name' => $product->name,
             'description' => $product->description,
             'stock' => $product->quantity,
             'price' => $product->price,
-            'category' => $product->category,
+            'category' => $product->category ? [
+                'id' => $product->category->id,
+                'name' => $product->category->name,
+            ] : null,
             'images' => is_array($product->images)
                 ? array_map(fn($img) => 'data:image/*;base64,' . $img, $product->images)
                 : [],
@@ -93,5 +111,20 @@ public function store(Request $request)
     {
         //
     }
+
+    public function suggestions(Request $request)
+{
+    $query = Product::query();
+
+    if ($request->has('search') && $request->search !== '') {
+        $search = $request->search;
+        $query->where('name', 'like', "%$search%");
+    }
+
+    // Limit to 10 suggestions for performance
+    $names = $query->limit(10)->pluck('name');
+
+    return response()->json($names);
+}
     
 }
