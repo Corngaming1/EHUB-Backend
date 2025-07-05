@@ -46,7 +46,7 @@ class ApiProductController extends Controller
     });
 }
 
-      $products = $query->paginate(5);
+      $products = $query->paginate(12);
 
  $products->getCollection()->transform(function ($product) {
         return [

@@ -1,14 +1,14 @@
+import { useState, useRef, useEffect } from 'react';
+import { Inertia } from '@inertiajs/inertia';
+import { usePage, Head, Link } from '@inertiajs/react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import AppLayout from '@/layouts/app-layout';
-import { type BreadcrumbItem } from '@/types';
-import { Head, Link, usePage } from '@inertiajs/react';
 import { PlusIcon, MoreVertical } from 'lucide-react';
-import { useState, useRef, useEffect } from 'react';
-import { Inertia } from '@inertiajs/inertia';
+import { type BreadcrumbItem } from '@/types';
 
 type Auth = {
   user: {
@@ -17,12 +17,6 @@ type Auth = {
     email: string;
   };
 };
-
-type PageProps = {
-  auth?: Auth;
-  [key: string]: unknown;
-};
-
 
 type Product = {
   in_stock: boolean;
@@ -39,14 +33,14 @@ type Product = {
 type PaginatedProducts = {
   data: Product[];
   links: { url: string | null; label: string; active: boolean }[];
-  meta: { current_page: number; last_page: number; };
+  meta: { current_page: number; last_page: number };
 };
 
-type ProductsPageProps = PageProps & {
+type ProductsPageProps = {
+  auth?: Auth;
   products: PaginatedProducts;
+  filters?: { search?: string };
 };
-
-
 
 const breadcrumbs: BreadcrumbItem[] = [
   {
@@ -55,53 +49,67 @@ const breadcrumbs: BreadcrumbItem[] = [
   },
 ];
 
+// Skeleton loader for table rows
+function SkeletonRow() {
+  return (
+    <TableRow>
+      {Array.from({ length: 9 }).map((_, idx) => (
+        <TableCell key={idx}>
+          <div className="h-4 bg-gray-200 rounded animate-pulse w-full"></div>
+        </TableCell>
+      ))}
+    </TableRow>
+  );
+}
+
 export default function ProductsIndex() {
-  const { products } = usePage<ProductsPageProps>().props;
+  const { products, filters } = usePage<ProductsPageProps>().props;
+  const [search, setSearch] = useState(filters?.search || '');
+  const [loading, setLoading] = useState(false);
 
-  const [search, setSearch] = useState('');
-  const [selected, setSelected] = useState<Product | null>(null);
-  const [openMenuId, setOpenMenuId] = useState<number | null>(null);
-  const [menuPosition, setMenuPosition] = useState<{ left: number; top: number } | null>(null);
-  const buttonRefs = useRef<{ [key: number]: HTMLButtonElement | null }>({});
-  const menuDropdownRef = useRef<HTMLDivElement | null>(null);
-  
-
-  const suggestions = search
-    ? products.data.filter(product =>
-        product.name.toLowerCase().includes(search.toLowerCase())
-      )
-    : [];
-
-  const filteredProducts = selected
-  ? products.data.filter(product => product.id === selected.id)
-  : search
-  ? products.data.filter(product =>
-      product.name.toLowerCase().includes(search.toLowerCase())
-    )
-  : products.data;
-
-  function handleSelect(product: Product) {
-    setSelected(product);
-    setSearch(product.name);
+  // Defensive check
+  if (!products || !Array.isArray(products.data) || !Array.isArray(products.links)) {
+    return (
+      <AppLayout breadcrumbs={breadcrumbs}>
+        <Head title="Products" />
+        <div className="p-8 text-center text-gray-500">Loading products...</div>
+      </AppLayout>
+    );
   }
 
+  // Loading spinner logic
+  useEffect(() => {
+    const unsubscribeStart = Inertia.on('start', () => setLoading(true));
+    const unsubscribeFinish = Inertia.on('finish', () => setLoading(false));
+    return () => {
+      unsubscribeStart();
+      unsubscribeFinish();
+    };
+  }, []);
+
+  // Search handlers
   function handleInputChange(e: React.ChangeEvent<HTMLInputElement>) {
     setSearch(e.target.value);
-    setSelected(null);
   }
 
   function handleKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
-    if (e.key === 'Enter' && suggestions.length > 0) {
-      setSelected(suggestions[0]);
-      setSearch(suggestions[0].name);
+    if (e.key === 'Enter') {
+      Inertia.get('/products', { search }, { preserveState: true, replace: true });
     }
   }
 
+  // Example delete handler (customize as needed)
   function handleDelete(id: number) {
     if (confirm('Are you sure you want to delete this product?')) {
       Inertia.delete(`/products/${id}`);
     }
   }
+
+  // Example menu logic (customize as needed)
+  const [openMenuId, setOpenMenuId] = useState<number | null>(null);
+  const [menuPosition, setMenuPosition] = useState<{ left: number; top: number } | null>(null);
+  const buttonRefs = useRef<{ [key: number]: HTMLButtonElement | null }>({});
+  const menuDropdownRef = useRef<HTMLDivElement | null>(null);
 
   function handleMenuToggle(id: number) {
     if (openMenuId === id) {
@@ -146,6 +154,12 @@ export default function ProductsIndex() {
   return (
     <AppLayout breadcrumbs={breadcrumbs}>
       <Head title="Products" />
+      {/* Loading overlay */}
+      {loading && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-white/70">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-4 border-blue-600 border-solid"></div>
+        </div>
+      )}
       <div className="flex h-full flex-1 flex-col gap-4 rounded-xl p-4 overflow-x-auto">
         <div className="rounded border p-6 shadow-xl">
           <div className="mb-4">
@@ -169,19 +183,6 @@ export default function ProductsIndex() {
                   <span className="max-sm:sr-only">Add new Product</span>
                 </Button>
               </Link>
-              {search && !selected && suggestions.length > 0 && (
-                <div className="absolute top-full left-0 z-10 w-full text-gray-500 bg-white border rounded shadow mt-1 max-h-40 overflow-y-auto">
-                  {suggestions.map(product => (
-                    <div
-                      key={product.id}
-                      className="px-3 py-2 hover:bg-blue-100 cursor-pointer"
-                      onClick={() => handleSelect(product)}
-                    >
-                      {product.name}
-                    </div>
-                  ))}
-                </div>
-              )}
             </div>
           </div>
 
@@ -202,117 +203,118 @@ export default function ProductsIndex() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredProducts.map((product, idx) => (
-                    <TableRow key={product.id}>
-                      <TableCell>{idx + 1}</TableCell>
-                      <TableCell>
-                        {product.name}
-                      </TableCell>
-                      <TableCell>
-                        {product.category ? product.category.name : <span className="text-gray-400">No category</span>}
-                      </TableCell>
-                      <TableCell>
-                        {product.brand ? product.brand.name : <span className="text-gray-400">No brand</span>}
-                      </TableCell>
-                      <TableCell>
-                        {product.price !== undefined && product.price !== null ? (
-                          <span>₱{product.price}</span>
-                        ) : (
-                          <span className="text-gray-400">No price</span>
-                        )}
-                      </TableCell>
-                       <TableCell>
-                          {typeof product.quantity === 'number' ? product.quantity : 0}
-                        </TableCell>
-                         <TableCell>
-                        {product.quantity && product.quantity > 0 ? (
-                          <span className="text-green-600 font-semibold">In Stock</span>
-                        ) : (
-                          <span className="text-red-600 font-semibold">Out of Stock</span>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        {product.is_active ? (
-                          <span className="text-green-600">Active</span>
-                        ) : (
-                          <span className="text-red-600">Inactive</span>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        <div className="relative">
-                          <Button
-                            ref={el => { buttonRefs.current[product.id] = el; }}
-                            size="icon"
-                            variant="ghost"
-                            onClick={e => {
-                              e.stopPropagation();
-                              handleMenuToggle(product.id);
-                            }}
-                            aria-label="Actions"
-                          >
-                            <MoreVertical />
-                          </Button>
-                          {openMenuId === product.id && menuPosition && (
-                            <div
-                              ref={menuDropdownRef}
-                              className="fixed z-50 w-32 rounded-md shadow-lg text-gray-900 dark:text-gray-900 bg-white ring-1 ring-black ring-opacity-5"
-                              style={{
-                                left: menuPosition.left,
-                                top: menuPosition.top,
-                              }}
-                              onClick={e => e.stopPropagation()}
-                            >
-                              <div className="py-1 flex flex-col">
-                                <Link href={`/products/${product.id}`}>
-                                  <button
-                                    className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100"
-                                    onClick={handleMenuClose}
-                                  >
-                                    Show
-                                  </button>
-                                </Link>
-                                <Link href={`/products/${product.id}/edit`}>
-                                  <button
-                                    className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100"
-                                    onClick={handleMenuClose}
-                                  >
-                                    Edit
-                                  </button>
-                                </Link>
-                                <hr className="my-1" />
-                                <button
-                                  className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100"
-                                  onClick={() => {
-                                    handleMenuClose();
-                                    handleDelete(product.id);
+                  {loading
+                    ? Array.from({ length: 10 }).map((_, idx) => <SkeletonRow key={idx} />)
+                    : products.data.map((product, idx) => (
+                        <TableRow key={product.id}>
+                          <TableCell>{idx + 1}</TableCell>
+                          <TableCell>{product.name}</TableCell>
+                          <TableCell>
+                            {product.category ? product.category.name : <span className="text-gray-400">No category</span>}
+                          </TableCell>
+                          <TableCell>
+                            {product.brand ? product.brand.name : <span className="text-gray-400">No brand</span>}
+                          </TableCell>
+                          <TableCell>
+                            {product.price !== undefined && product.price !== null ? (
+                              <span>₱{product.price}</span>
+                            ) : (
+                              <span className="text-gray-400">No price</span>
+                            )}
+                          </TableCell>
+                          <TableCell>
+                            {typeof product.quantity === 'number' ? product.quantity : 0}
+                          </TableCell>
+                          <TableCell>
+                            {product.quantity && product.quantity > 0 ? (
+                              <span className="text-green-600 font-semibold">In Stock</span>
+                            ) : (
+                              <span className="text-red-600 font-semibold">Out of Stock</span>
+                            )}
+                          </TableCell>
+                          <TableCell>
+                            {product.is_active ? (
+                              <span className="text-green-600">Active</span>
+                            ) : (
+                              <span className="text-red-600">Inactive</span>
+                            )}
+                          </TableCell>
+                          <TableCell>
+                            <div className="relative">
+                              <Button
+                                ref={el => { buttonRefs.current[product.id] = el; }}
+                                size="icon"
+                                variant="ghost"
+                                onClick={e => {
+                                  e.stopPropagation();
+                                  handleMenuToggle(product.id);
+                                }}
+                                aria-label="Actions"
+                              >
+                                <MoreVertical />
+                              </Button>
+                              {openMenuId === product.id && menuPosition && (
+                                <div
+                                  ref={menuDropdownRef}
+                                  className="fixed z-50 w-32 rounded-md shadow-lg text-gray-900 dark:text-gray-900 bg-white ring-1 ring-black ring-opacity-5"
+                                  style={{
+                                    left: menuPosition.left,
+                                    top: menuPosition.top,
                                   }}
+                                  onClick={e => e.stopPropagation()}
                                 >
-                                  Delete
-                                </button>
-                              </div>
+                                  <div className="py-1 flex flex-col">
+                                    <Link href={`/products/${product.id}`}>
+                                      <button
+                                        className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100"
+                                        onClick={handleMenuClose}
+                                      >
+                                        Show
+                                      </button>
+                                    </Link>
+                                    <Link href={`/products/${product.id}/edit`}>
+                                      <button
+                                        className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100"
+                                        onClick={handleMenuClose}
+                                      >
+                                        Edit
+                                      </button>
+                                    </Link>
+                                    <hr className="my-1" />
+                                    <button
+                                      className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100"
+                                      onClick={() => {
+                                        handleMenuClose();
+                                        handleDelete(product.id);
+                                      }}
+                                    >
+                                      Delete
+                                    </button>
+                                  </div>
+                                </div>
+                              )}
                             </div>
-                          )}
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
+                          </TableCell>
+                        </TableRow>
+                      ))
+                  }
                 </TableBody>
               </Table>
               {/* Pagination */}
-            <div className="flex justify-center mt-4 gap-1">
-              {products.links.map((link, idx) => (
-                <button
-                  key={idx}
-                  disabled={!link.url}
-                  className={`px-3 py-1 rounded transition 
-                      ${link.active ? 'bg-blue-600 text-white' : 'bg-gray-200 dark:bg-gray-700 dark:text-white'}
-                      ${link.url ? 'hover:bg-blue-500 hover:text-white cursor-pointer' : 'opacity-50 cursor-not-allowed'}
-                    `}
-                  onClick={() => link.url && Inertia.visit(link.url!)}
-                  dangerouslySetInnerHTML={{ __html: link.label }}
-                />
-              ))}
-            </div>
+              <div className="flex justify-center mt-4 gap-1">
+                {products.links.map((link, idx) => (
+                  <button
+                    key={idx}
+                    disabled={!link.url}
+                    className={`px-3 py-1 rounded transition
+                        ${link.active ? 'bg-blue-600 text-white' : 'bg-gray-200 dark:bg-gray-700 dark:text-white'}
+                        ${link.url ? 'hover:bg-blue-500 hover:text-white cursor-pointer' : 'opacity-50 cursor-not-allowed'}
+                      `}
+                    onClick={() => link.url && Inertia.visit(link.url!)}
+                    dangerouslySetInnerHTML={{ __html: link.label }}
+                  />
+                ))}
+              </div>
             </CardContent>
           </Card>
         </div>

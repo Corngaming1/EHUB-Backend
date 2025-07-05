@@ -5,15 +5,25 @@ namespace App\Http\Controllers;
 use App\Models\Category;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
+use Illuminate\Support\Facades\Log;
 
 class CategoryController extends Controller
 {
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
-        $categories = Category::all()->map(function ($category) {
+
+    $query = Category::select('id', 'name', 'slug', 'image', 'is_active')
+        ->orderBy('created_at', 'desc');
+
+    if ($request->has('search') && $request->search !== '') {
+        $query->where('name', 'like', '%' . $request->search . '%');
+    }
+
+    $categories = $query->paginate(10)
+        ->through(function ($category) {
             return [
                 'id' => $category->id,
                 'name' => $category->name,
@@ -23,10 +33,11 @@ class CategoryController extends Controller
             ];
         });
 
-        return Inertia::render('categories/index', [
-            'categories' => $categories,
-        ]);
-    }
+    return Inertia::render('categories/index', [
+        'categories' => $categories,
+        'filters' => $request->only('search'),
+    ]);
+}
 
     /**
      * Show the form for creating a new resource.

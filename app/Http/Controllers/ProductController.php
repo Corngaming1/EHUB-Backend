@@ -9,11 +9,16 @@ use Inertia\Inertia;
 
 class ProductController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $products = Product::with(['category', 'brand'])
-        ->orderBy('created_at', 'desc')
-        ->paginate(20)
+       $query = Product::with(['category', 'brand'])
+        ->orderBy('created_at', 'desc');
+
+    if ($request->has('search') && $request->search !== '') {
+        $query->where('name', 'like', '%' . $request->search . '%');
+    }
+
+    $products = $query->paginate(20)
         ->through(function ($product) {
             return [
                 'id' => $product->id,
@@ -33,8 +38,9 @@ class ProductController extends Controller
         });
 
 
-        return Inertia::render('products/index', [
+            return Inertia::render('products/index', [
             'products' => $products,
+            'filters' => $request->only('search'),
         ]);
     }
 

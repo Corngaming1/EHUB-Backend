@@ -23,9 +23,15 @@ type Category = {
   is_active: boolean;
 };
 
+type PaginatedCategories = {
+  data: Category[];
+  links: { url: string | null; label: string; active: boolean }[];
+  meta: { current_page: number; last_page: number; };
+};
+
 type PageProps = {
   auth?: AuthUser;
-  categories: Category[];
+  categories: PaginatedCategories;
 };
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -36,42 +42,44 @@ const breadcrumbs: BreadcrumbItem[] = [
 ];
 
 export default function Dashboard() {
-  const { categories } = usePage<PageProps>().props;
+  const { categories, filters } = usePage<PageProps & { filters: { search?: string } }>().props;
 
-  const [search, setSearch] = useState('');
+    // Defensive check
+    if (
+    !categories ||
+    !Array.isArray(categories.data) ||
+    !Array.isArray(categories.links)
+  ) {
+    return (
+      <AppLayout breadcrumbs={breadcrumbs}>
+        <Head title="Categories" />
+        <div className="p-8 text-center text-gray-500">Loading categories...</div>
+      </AppLayout>
+    );
+  }
+
+  const [search, setSearch] = useState(filters?.search || '');
   const [selected, setSelected] = useState<Category | null>(null);
 
+  const [loading, setLoading] = useState(false);
   const [openMenuId, setOpenMenuId] = useState<number | null>(null);
   const [menuPosition, setMenuPosition] = useState<{ left: number; top: number } | null>(null);
   const buttonRefs = useRef<{ [key: number]: HTMLButtonElement | null }>({});
   const menuDropdownRef = useRef<HTMLDivElement | null>(null);
 
-  const suggestions = search
-    ? categories.filter(cat => cat.name.toLowerCase().includes(search.toLowerCase()))
-    : [];
 
-  const filteredCategories = selected
-    ? categories.filter(cat => cat.id === selected.id)
-    : search
-    ? suggestions
-    : categories;
-
-  function handleSelect(cat: Category) {
-    setSelected(cat);
-    setSearch(cat.name);
-  }
+  const filteredCategories = categories.data;
 
   function handleInputChange(e: React.ChangeEvent<HTMLInputElement>) {
-    setSearch(e.target.value);
-    setSelected(null);
-  }
+  setSearch(e.target.value);
+  setSelected(null);
+}
 
   function handleKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
-    if (e.key === 'Enter' && suggestions.length > 0) {
-      setSelected(suggestions[0]);
-      setSearch(suggestions[0].name);
-    }
+  if (e.key === 'Enter') {
+    Inertia.get('/categories', { search }, { preserveState: true, replace: true });
   }
+}
 
   function handleDelete(id: number) {
     if (confirm('Are you sure you want to delete this category?')) {
@@ -121,9 +129,29 @@ export default function Dashboard() {
     };
   }, [openMenuId]);
 
+  // Listen for Inertia navigation events
+  useEffect(() => {
+    const start = () => setLoading(true);
+    const finish = () => setLoading(false);
+
+    const unsubscribeStart = Inertia.on('start', start);
+    const unsubscribeFinish = Inertia.on('finish', finish);
+
+    return () => {
+      unsubscribeStart();
+      unsubscribeFinish();
+    };
+  }, []);
+
   return (
     <AppLayout breadcrumbs={breadcrumbs}>
       <Head title="Categories" />
+      {loading && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-white/70">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-4 border-blue-600 border-solid"></div>
+        </div>
+      )}
+
       <div className="flex h-full flex-1 flex-col gap-4 rounded-xl p-4 overflow-x-auto">
         <div className="rounded border p-6 shadow-xl">
           <div className="mb-4">
@@ -147,19 +175,6 @@ export default function Dashboard() {
                   <span className="max-sm:sr-only">Add new Category</span>
                 </Button>
               </Link>
-              {search && !selected && suggestions.length > 0 && (
-                <div className="absolute top-full left-0 z-10 w-full text-gray-500 bg-white border rounded shadow mt-1 max-h-40 overflow-y-auto">
-                  {suggestions.map(cat => (
-                    <div
-                      key={cat.id}
-                      className="px-3 py-2 hover:bg-blue-100 cursor-pointer"
-                      onClick={() => handleSelect(cat)}
-                    >
-                      {cat.name}
-                    </div>
-                  ))}
-                </div>
-              )}
             </div>
           </div>
 
@@ -250,6 +265,20 @@ export default function Dashboard() {
                   ))}
                 </TableBody>
               </Table>
+                 <div className="flex justify-center mt-4 gap-1">
+                {categories.links.map((link, idx) => (
+                <button
+                    key={idx}
+                    disabled={!link.url}
+                    className={`px-3 py-1 rounded transition
+                        ${link.active ? 'bg-blue-600 text-white' : 'bg-gray-200 dark:bg-gray-700 dark:text-white'}
+                        ${link.url ? 'hover:bg-blue-500 hover:text-white cursor-pointer' : 'opacity-50 cursor-not-allowed'}
+                    `}
+                    onClick={() => link.url && Inertia.visit(link.url!)}
+                    dangerouslySetInnerHTML={{ __html: link.label }}
+                />
+                ))}
+            </div>
             </CardContent>
           </Card>
         </div>
