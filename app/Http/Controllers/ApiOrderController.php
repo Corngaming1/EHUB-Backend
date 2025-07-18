@@ -2,10 +2,14 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Order;
+use App\Models\OrderItem;
 use App\Models\User;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
+
+
 
 class ApiOrderController extends Controller
 {
@@ -36,9 +40,55 @@ class ApiOrderController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-    public function store(Request $request)
+     public function store(Request $request)
     {
-        //
+        $request->validate([
+            'email' => 'required|email',
+            'phone' => 'required|string',
+            'location' => 'required|string',
+            'deliveryOption' => 'required|string',
+            'cart' => 'required|array',
+            'cart.*.id' => 'required|integer',
+            'cart.*.name' => 'required|string',
+            'cart.*.price' => 'required|numeric',
+            'cart.*.quantity' => 'required|integer',
+            'total' => 'required|numeric',
+        ]);
+
+        // Find or create the user (optional password since it's anonymous)
+        $user = User::firstOrCreate(
+            ['email' => $request->email],
+            [
+                'name' => 'Guest_' . Str::random(5),
+                'password' => Hash::make(Str::random(8)),
+            ]
+        );
+
+        // Create the order
+        $order = Order::create([
+            'user_id' => $user->id,
+            'grand_total' => $request->total,
+            'payment_method' => $request->deliveryOption,
+            'payment_status' => 'Pending',
+            'status' => 'Pending',
+            'currency' => 'PHP',
+            'shipping_amount' => 0,
+            'shipping_method' => $request->deliveryOption,
+            'notes' => 'Phone: ' . $request->phone . ', Location: ' . $request->location,
+        ]);
+
+        // Create order items
+        foreach ($request->cart as $item) {
+            OrderItem::create([
+                'order_id' => $order->id,
+                'product_id' => $item['id'],
+                'quantity' => $item['quantity'],
+                'unit_amount' => $item['price'],
+                'total_amount' => $item['price'] * $item['quantity'],
+            ]);
+        }
+
+        return response()->json(['message' => 'Order placed successfully'], 201);
     }
 
     /**

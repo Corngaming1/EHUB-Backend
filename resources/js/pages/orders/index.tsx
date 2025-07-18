@@ -120,7 +120,8 @@ export default function OrdersIndex() {
             <div className="flex items-end gap-2 mt-2">
               <Input id="order-search" placeholder="Search orders..." type="text" />
               <Link href="/orders/create">
-                <Button variant="outline" className="aspect-square max-sm:p-0 cursor-pointer bg-blue-600 hover:bg-blue-700 text-white">
+                <Button variant="outline" className="aspect-square max-sm:p-0 cursor-pointer bg-blue-600 hover:bg-blue-700 text-white transition active:scale-95 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                >
                   <PlusIcon className="opacity-60 sm:-ms-1" size={16} aria-hidden="true" />
                   <span className="max-sm:sr-only">Add new Order</span>
                 </Button>
@@ -181,33 +182,33 @@ export default function OrdersIndex() {
                               onClick={e => e.stopPropagation()}
                             >
                               <div className="py-1 flex flex-col">
-                                <Link href={route('orders.show', order.id)}>
+                                  <Link href={route('orders.show', order.id)}>
+                                    <button
+                                      className="w-full text-left px-4 py-2 text-sm hover:bg-blue-100 dark:hover:bg-blue-900 cursor-pointer transition active:scale-95 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                                      onClick={handleMenuClose}
+                                    >
+                                      Show
+                                    </button>
+                                  </Link>
+                                  <Link href={route('orders.edit', order.id)}>
+                                    <button
+                                      className="w-full text-left px-4 py-2 text-sm hover:bg-blue-100 dark:hover:bg-blue-900 cursor-pointer transition active:scale-95 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                                      onClick={handleMenuClose}
+                                    >
+                                      Edit
+                                    </button>
+                                  </Link>
+                                  <hr className="my-1" />
                                   <button
-                                    className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100"
-                                    onClick={handleMenuClose}
+                                    className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-100 dark:hover:bg-red-900 cursor-pointer transition active:scale-95 focus:outline-none focus:ring-2 focus:ring-red-400"
+                                    onClick={() => {
+                                      handleMenuClose();
+                                      handleDelete(order.id);
+                                    }}
                                   >
-                                    Show
+                                    Delete
                                   </button>
-                                </Link>
-                                <Link href={route('orders.edit', order.id)}>
-                                  <button
-                                    className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100"
-                                    onClick={handleMenuClose}
-                                  >
-                                    Edit
-                                  </button>
-                                </Link>
-                                <hr className="my-1" />
-                                <button
-                                  className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100"
-                                  onClick={() => {
-                                    handleMenuClose();
-                                    handleDelete(order.id);
-                                  }}
-                                >
-                                  Delete
-                                </button>
-                              </div>
+                                </div>
                             </div>
                           )}
                         </div>

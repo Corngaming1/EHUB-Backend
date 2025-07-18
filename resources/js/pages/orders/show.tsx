@@ -62,7 +62,12 @@ export default function Show() {
         <div className="mb-4 flex justify-between items-center">
           <h1 className="text-2xl font-semibold">Order #{order.id}</h1>
           <Link href="/orders">
-            <Button variant="outline">Back to Orders</Button>
+            <Button
+                variant="outline"
+                className="cursor-pointer bg-blue-600 hover:bg-blue-700 text-white transition active:scale-95 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                >
+                Back to Orders
+          </Button>
           </Link>
         </div>
 

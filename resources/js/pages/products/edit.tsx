@@ -29,6 +29,7 @@ type Product = {
   category_id?: number;
   brand_id?: number;
   quantity: number | '';
+  description?: string;
 };
 
 type Category = { id: number; name: string };
@@ -73,6 +74,7 @@ export default function EditProduct({
     category_id: number | '';
     brand_id: number | '';
     images?: File[];
+    description?: string;
   }>({
     name: product.name || '',
     slug: product.slug || '',
@@ -84,6 +86,7 @@ export default function EditProduct({
     category_id: product.category_id ?? '',
     brand_id: product.brand_id ?? '',
     quantity: product.quantity ?? '',
+    description: product.description || '',
   });
 
   function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
@@ -108,6 +111,7 @@ export default function EditProduct({
     formData.append('category_id', data.category_id ? String(data.category_id) : '');
     formData.append('brand_id', data.brand_id ? String(data.brand_id) : '');
     formData.append('quantity', data.quantity !== '' ? String(data.quantity) : '0');
+    formData.append('description', data.description || '');
 
     selectedImages.forEach((file, index) => {
       formData.append(`images[${index}]`, file);
@@ -129,11 +133,23 @@ export default function EditProduct({
             <h1 className="text-2xl font-semibold">Edit Product</h1>
              <Link href="/products">
                   <Button
-                     variant="outline"
-                       className="aspect-square max-sm:p-0 cursor-pointer bg-blue-600 hover:bg-blue-700 text-white"
-                       >
-                       Back To Products
-                   </Button>
+                    variant="outline"
+                    className={`
+                      cursor-pointer
+                      transition
+                      bg-blue-600
+                      hover:bg-blue-700
+                      text-white
+                      active:scale-95
+                      focus:outline-none
+                      focus:ring-2
+                      focus:ring-blue-400
+                      px-4 py-2
+                      rounded
+                    `}
+                  >
+                    Back To Products
+                  </Button>
               </Link>
           </div>
           <Card>
@@ -190,6 +206,21 @@ export default function EditProduct({
                     />
                     {errors.quantity && <p className="text-red-600 mt-1">{errors.quantity}</p>}
                   </div>
+
+                  {/* Description */}
+                  <div className="col-span-2">
+                      <Label htmlFor="description">Description</Label>
+                      <textarea
+                        id="description"
+                        placeholder="Product description"
+                        value={data.description}
+                        onChange={e => setData('description', e.target.value)}
+                        className="w-full border rounded p-2"
+                        rows={4}
+                        required
+                      />
+                      {errors.description && <p className="text-red-600 mt-1">{errors.description}</p>}
+                    </div>
 
                   {/* Category */}
                   <div className="col-span-2 md:col-span-1">
@@ -278,7 +309,7 @@ export default function EditProduct({
                       ref={fileInputRef}
                       onChange={handleFileChange}
                       className="block w-full rounded border px-3 py-2"
-                       accept="image/*" // <-- Add this line
+                      accept="image/*"
                     />
                     {errors.images && <p className="text-red-600 mt-1">{errors.images}</p>}
                   </div>
@@ -323,9 +354,26 @@ export default function EditProduct({
 
                   {/* Submit */}
                   <div className="col-span-2 flex justify-end">
-                    <Button type="submit" disabled={processing}>
-                      {processing ? 'Updating...' : 'Update Product'}
-                    </Button>
+                    <Button
+                    type="submit"
+                    disabled={processing}
+                    className={`
+                      cursor-pointer
+                      bg-blue-600
+                      hover:bg-blue-700
+                      text-white
+                      transition
+                      active:scale-95
+                      focus:outline-none
+                      focus:ring-2
+                      focus:ring-blue-400
+                      px-4 py-2
+                      rounded
+                      ${processing ? 'opacity-60 cursor-not-allowed' : ''}
+                    `}
+                  >
+                    {processing ? 'Updating...' : 'Update Product'}
+                  </Button>
                   </div>
                 </div>
               </form>

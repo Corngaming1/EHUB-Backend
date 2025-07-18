@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import AppLayout from '@/layouts/app-layout';
 import { PlusIcon, MoreVertical } from 'lucide-react';
+import { useDebounce } from 'use-debounce';
 import { type BreadcrumbItem } from '@/types';
 
 type Auth = {
@@ -65,6 +66,7 @@ function SkeletonRow() {
 export default function ProductsIndex() {
   const { products, filters } = usePage<ProductsPageProps>().props;
   const [search, setSearch] = useState(filters?.search || '');
+  const [debouncedSearch] = useDebounce(search, 400); // 400ms debounce
   const [loading, setLoading] = useState(false);
 
   // Defensive check
@@ -87,16 +89,18 @@ export default function ProductsIndex() {
     };
   }, []);
 
+
+
   // Search handlers
   function handleInputChange(e: React.ChangeEvent<HTMLInputElement>) {
     setSearch(e.target.value);
   }
 
-  function handleKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
-    if (e.key === 'Enter') {
-      Inertia.get('/products', { search }, { preserveState: true, replace: true });
-    }
+ function handleKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
+  if (e.key === 'Enter') {
+    Inertia.get('/products', { search: debouncedSearch }, { preserveState: true, replace: true });
   }
+}
 
   // Example delete handler (customize as needed)
   function handleDelete(id: number) {
@@ -174,10 +178,17 @@ export default function ProductsIndex() {
                 onKeyDown={handleKeyDown}
                 autoComplete="off"
               />
+              <Button
+                variant="outline"
+                className="aspect-square max-sm:p-0 cursor-pointer bg-blue-600 hover:bg-blue-700 text-white transition active:scale-95 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                onClick={() => Inertia.get('/products', { search: debouncedSearch }, { preserveState: true, replace: true })}
+              >
+                Search
+              </Button>
               <Link href="/products/create">
                 <Button
                   variant="outline"
-                  className="aspect-square max-sm:p-0 cursor-pointer bg-blue-600 hover:bg-blue-700 text-white"
+                  className="aspect-square max-sm:p-0 cursor-pointer bg-blue-600 hover:bg-blue-700 text-white transition active:scale-95 focus:outline-none focus:ring-2 focus:ring-blue-400"
                 >
                   <PlusIcon className="opacity-60 sm:-ms-1" size={16} aria-hidden="true" />
                   <span className="max-sm:sr-only">Add new Product</span>
@@ -266,7 +277,7 @@ export default function ProductsIndex() {
                                   <div className="py-1 flex flex-col">
                                     <Link href={`/products/${product.id}`}>
                                       <button
-                                        className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100"
+                                        className="w-full text-left px-4 py-2 text-sm hover:bg-blue-100 dark:hover:bg-blue-900 cursor-pointer transition active:scale-95 focus:outline-none focus:ring-2 focus:ring-blue-400"
                                         onClick={handleMenuClose}
                                       >
                                         Show
@@ -274,7 +285,7 @@ export default function ProductsIndex() {
                                     </Link>
                                     <Link href={`/products/${product.id}/edit`}>
                                       <button
-                                        className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100"
+                                        className="w-full text-left px-4 py-2 text-sm hover:bg-blue-100 dark:hover:bg-blue-900 cursor-pointer transition active:scale-95 focus:outline-none focus:ring-2 focus:ring-blue-400"
                                         onClick={handleMenuClose}
                                       >
                                         Edit
@@ -282,7 +293,7 @@ export default function ProductsIndex() {
                                     </Link>
                                     <hr className="my-1" />
                                     <button
-                                      className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100"
+                                      className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-100 dark:hover:bg-red-900 cursor-pointer transition active:scale-95 focus:outline-none focus:ring-2 focus:ring-red-400"
                                       onClick={() => {
                                         handleMenuClose();
                                         handleDelete(product.id);

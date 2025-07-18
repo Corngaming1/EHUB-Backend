@@ -11,7 +11,7 @@ class OrderItem extends Model
         'product_id',
         'quantity',
         'unit_amount',
-        'total_amount ',
+        'total_amount',
     ];
 
     // Relationship to Order

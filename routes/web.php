@@ -52,6 +52,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 Route::prefix('api')->middleware('api')->group(function () {
     Route::get('apiproducts/suggestions', [ApiProductController::class, 'suggestions']);
     Route::apiResource('apiusers', ApiUserController::class);
+    Route::post('/api/apiorders', [ApiOrderController::class, 'store']);
     Route::apiResource('apicategories', ApiCategoryController::class);
     Route::apiResource('apibrands', ApiBrandController::class);
     Route::apiResource('apiproducts', ApiProductController::class); 

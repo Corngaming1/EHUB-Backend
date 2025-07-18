@@ -111,12 +111,24 @@ export default function CreateProduct({ categories = [], brands = [] }: CreatePr
           <div className="mb-5 flex items-center justify-between">
             <h1 className="text-xl text-slate-600">Create Product</h1>
             <Link href="/products">
-              <Button
-                variant="outline"
-                className="aspect-square max-sm:p-0 cursor-pointer bg-blue-600 hover:bg-blue-700 text-white"
-              >
-                Back To Products
-              </Button>
+               <Button
+                        variant="outline"
+                        className={`
+                        cursor-pointer
+                        transition
+                        bg-blue-600
+                        hover:bg-blue-700
+                        text-white
+                        active:scale-95
+                        focus:outline-none
+                        focus:ring-2
+                        focus:ring-blue-400
+                        px-4 py-2
+                        rounded
+                         `}
+                       >
+               Back To Products
+               </Button>
             </Link>
           </div>
 
@@ -298,12 +310,26 @@ export default function CreateProduct({ categories = [], brands = [] }: CreatePr
 
                   <div className="col-span-2 mt-4">
                     <Button
-                      type="submit"
-                      className="cursor-pointer bg-blue-600 hover:bg-blue-700 text-white w-full"
-                      disabled={processing}
-                    >
-                      Create Product
-                    </Button>
+                          type="submit"
+                          className={`
+                            cursor-pointer
+                            bg-blue-600
+                            hover:bg-blue-700
+                            text-white
+                            w-full
+                            transition
+                            active:scale-95
+                            focus:outline-none
+                            focus:ring-2
+                            focus:ring-blue-400
+                            px-4 py-2
+                            rounded
+                            ${processing ? 'opacity-60 cursor-not-allowed' : ''}
+                          `}
+                          disabled={processing}
+                        >
+                          Create Product
+                        </Button>
                   </div>
                 </div>
               </form>

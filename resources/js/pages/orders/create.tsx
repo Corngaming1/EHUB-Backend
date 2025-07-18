@@ -96,9 +96,12 @@ export default function OrdersCreate() {
           <div className="mb-5 flex items-center justify-between">
             <div className="text-xl text-slate-600">Create Order</div>
             <Link href="/orders">
-              <Button variant="outline" className="aspect-square max-sm:p-0 cursor-pointer bg-blue-600 hover:bg-blue-700 text-white">
-                Back To Orders
-              </Button>
+              <Button
+              variant="outline"
+              className="aspect-square max-sm:p-0 cursor-pointer bg-blue-600 hover:bg-blue-700 text-white transition active:scale-95 focus:outline-none focus:ring-2 focus:ring-blue-400"
+            >
+              Back To Orders
+            </Button>
             </Link>
           </div>
           <Card>
@@ -167,15 +170,24 @@ export default function OrdersCreate() {
                           {selectedProduct && selectedProduct.is_active === false && (
                             <span className="text-yellow-600 text-xs ml-2">Inactive</span>
                           )}
-                          <Button type="button" variant="destructive" onClick={() => removeItem(index)}>
-                            Remove
-                          </Button>
+                          <Button
+                              type="button"
+                              variant="destructive"
+                              onClick={() => removeItem(index)}
+                              className="cursor-pointer transition active:scale-95 focus:outline-none focus:ring-2 focus:ring-red-400"
+                            >
+                              Remove
+                            </Button>
                         </div>
                       );
                     })}
-                    <Button type="button" onClick={addItem} className="mb-4">
-                      Add Product
-                    </Button>
+                    <Button
+                    type="button"
+                    onClick={addItem}
+                    className="mb-4 cursor-pointer bg-blue-600 hover:bg-blue-700 text-white transition active:scale-95 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                  >
+                    Add Product
+                  </Button>
                   </div>
 
                   {/* Grand Total */}
@@ -291,7 +303,10 @@ export default function OrdersCreate() {
                     />
                   </div>
                   <div className="col-span-2 mt-4">
-                    <Button type="submit" className="cursor-pointer bg-blue-600 hover:bg-blue-700 text-white w-full">
+                    <Button
+                      type="submit"
+                      className="cursor-pointer bg-blue-600 hover:bg-blue-700 text-white w-full transition active:scale-95 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                    >
                       Create Order
                     </Button>
                   </div>

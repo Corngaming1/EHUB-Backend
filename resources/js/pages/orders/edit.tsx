@@ -168,7 +168,12 @@ export default function EditOrder({
         <div className="mb-5 flex items-center justify-between">
           <h1 className="text-2xl font-semibold">Edit Order</h1>
           <Link href="/orders">
-            <Button variant="outline">Back to Orders</Button>
+           <Button
+              variant="outline"
+              className="cursor-pointer bg-blue-600 hover:bg-blue-700 text-white transition active:scale-95 focus:outline-none focus:ring-2 focus:ring-blue-400"
+            >
+              Back to Orders
+            </Button>
           </Link>
         </div>
         <Card>
@@ -225,12 +230,17 @@ export default function EditOrder({
                         type="button"
                         variant="destructive"
                         onClick={() => removeItem(index)}
+                        className="cursor-pointer transition active:scale-95 focus:outline-none focus:ring-2 focus:ring-red-400"
                       >
                         Remove
                       </Button>
                     </div>
                   ))}
-                  <Button type="button" onClick={addItem} className="mb-4">
+                  <Button
+                    type="button"
+                    onClick={addItem}
+                    className="mb-4 cursor-pointer bg-blue-600 hover:bg-blue-700 text-white transition active:scale-95 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                  >
                     Add Product
                   </Button>
                 </div>
@@ -392,13 +402,13 @@ export default function EditOrder({
 
                 {/* Submit Button */}
                 <div className="col-span-2 mt-4">
-                  <Button
-                    type="submit"
-                    disabled={processing}
-                    className="w-full bg-blue-600 hover:bg-blue-700 text-white"
-                  >
-                    Update Order
-                  </Button>
+                <Button
+                  type="submit"
+                  disabled={processing}
+                  className="w-full bg-blue-600 hover:bg-blue-700 text-white cursor-pointer transition active:scale-95 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                >
+                  Update Order
+                </Button>
                 </div>
               </div>
             </form>
