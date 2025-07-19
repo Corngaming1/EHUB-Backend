@@ -9,6 +9,8 @@ import { Inertia } from '@inertiajs/inertia';
 import { Head, Link, usePage } from '@inertiajs/react';
 import { PlusIcon, MoreVertical } from 'lucide-react';
 import { useRef, useState, useEffect } from 'react';
+import { toast, ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 type AuthUser = {
   id: number;
@@ -44,6 +46,11 @@ type PageProps = {
   [key: string]: unknown;
 };
 
+type FlashProps = {
+  success?: string;
+  error?: string;
+};
+
 const breadcrumbs: BreadcrumbItem[] = [
   {
     title: 'Orders',
@@ -52,10 +59,18 @@ const breadcrumbs: BreadcrumbItem[] = [
 ];
 
 export default function OrdersIndex() {
+   const { flash } = usePage<{ flash: FlashProps } & PageProps>().props;
+
   const [openMenuId, setOpenMenuId] = useState<number | null>(null);
   const [menuPosition, setMenuPosition] = useState<{ left: number; top: number } | null>(null);
   const buttonRefs = useRef<{ [key: number]: HTMLButtonElement | null }>({});
   const menuDropdownRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    if (flash.success) {
+      toast.success(flash.success);
+    }
+  }, [flash]);
 
   function handleMenuToggle(id: number) {
     if (openMenuId === id) {
@@ -84,6 +99,16 @@ export default function OrdersIndex() {
       Inertia.delete(route('orders.destroy', id));
     }
   }
+
+ function handleMarkAsCompleted(orderId: number) {
+  if (confirm('Mark this order as completed and delivered?')) {
+    Inertia.put(route('orders.markAsCompleted', orderId), {
+      status: 'delivered',         // ✅ string, not variable
+      payment_status: 'paid' // ✅ string, not variable
+    });
+  }
+}
+
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -126,6 +151,15 @@ export default function OrdersIndex() {
                   <span className="max-sm:sr-only">Add new Order</span>
                 </Button>
               </Link>
+              
+            <Link href="/orders/archived">
+              <Button
+                variant="outline"
+                className="ml-2 bg-gray-100 hover:bg-gray-200 text-gray-700 transition active:scale-95"
+              >
+                Archived Orders
+              </Button>
+            </Link>
             </div>
           </div>
           <Card>
@@ -133,6 +167,9 @@ export default function OrdersIndex() {
               <Table>
                 <TableHeader>
                   <TableRow>
+                    <TableHead>
+                    <input type="checkbox" disabled />
+                    </TableHead>
                     <TableHead>#</TableHead>
                     <TableHead>User</TableHead>
                     <TableHead>Status</TableHead>
@@ -146,6 +183,14 @@ export default function OrdersIndex() {
                 <TableBody>
                   {orders.map((order, idx) => (
                     <TableRow key={order.id}>
+                      <TableCell>
+                        <input
+                          type="checkbox"
+                          checked={order.status === 'completed' && order.payment_status === 'delivered'}
+                          onChange={() => handleMarkAsCompleted(order.id)}
+                          className="w-4 h-4 cursor-pointer"
+                        />
+                      </TableCell>
                       <TableHead>{idx + 1}</TableHead>
                       <TableHead>
                         {order.user ? `${order.user.name} (ID: ${order.user.id})` : 'N/A'}
@@ -219,6 +264,7 @@ export default function OrdersIndex() {
               </Table>
             </CardContent>
           </Card>
+          <ToastContainer position="top-right" autoClose={3000} hideProgressBar />
         </div>
       </div>
     </AppLayout>

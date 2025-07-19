@@ -36,7 +36,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::middleware('role:admin,staff')->group(function () {
 
         Route::get('/products/{id}/image/{index?}', [ProductController::class, 'image'])->name('products.image');
-       
+        Route::put('/orders/{order}/mark-completed', [OrderController::class, 'markAsCompleted'])->name('orders.markAsCompleted');
+        Route::get('/orders/archived', [OrderController::class, 'archived'])->name('orders.archived');
+        Route::patch('/orders/{order}/unarchive', [OrderController::class, 'unarchive'])->name('orders.unarchive');
         Route::resource('products', ProductController::class);
         Route::resource('brands', BrandController::class);
         Route::resource('categories', CategoryController::class);

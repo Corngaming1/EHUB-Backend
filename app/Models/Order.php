@@ -16,6 +16,11 @@ class Order extends Model
        'shipping_amount',
        'shipping_method',
        'notes',
+        'archived', // New field added
+    ];
+    
+    protected $casts = [
+        'archived' => 'boolean', // Cast archived to boolean
     ];
 
     public function user()
