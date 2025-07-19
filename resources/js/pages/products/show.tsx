@@ -10,6 +10,7 @@ type Product = {
   id: number;
   name: string;
   slug: string;
+  sku: string;
   description?: string;
   price?: number;
   image?: string | null;
@@ -90,6 +91,9 @@ export default function Show() {
               <div className="md:col-span-2 space-y-4">
                 <div>
                   <strong>Slug:</strong> <span>{product.slug}</span>
+                </div>
+                <div>
+                  <strong>SKU:</strong> <span>{product.sku || '—'}</span>
                 </div>
                 <div>
                   <strong>Description:</strong>

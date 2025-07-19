@@ -36,7 +36,8 @@ class ApiProductController extends Controller
         $search = $request->search;
         $query->where(function ($q) use ($search) {
             $q->where('name', 'like', "%$search%")
-            ->orWhere('description', 'like', "%$search%");
+            ->orWhere('description', 'like', "%$search%")
+             ->orWhere('sku', 'like', "%$search%");
         });
     }
 
@@ -52,6 +53,7 @@ class ApiProductController extends Controller
         return [
             'id' => $product->id,
             'name' => $product->name,
+            'sku' => $product->sku, 
             'description' => $product->description,
             'stock' => $product->quantity,
             'price' => $product->price,
@@ -73,7 +75,28 @@ class ApiProductController extends Controller
  */
 public function store(Request $request)
 {
-    //
+    $validated = $request->validate([
+        'name' => 'required|string|max:255',
+        'slug' => 'required|string|max:255|unique:products,slug',
+        'sku' => 'nullable|string|unique:products,sku',
+        'description' => 'nullable|string',
+        'price' => 'required|numeric',
+        'images.*' => 'nullable|image|max:2048',
+        'category_id' => 'required|exists:categories,id',
+        'brand_id' => 'nullable|exists:brands,id',
+        'in_stock' => 'boolean',
+        'is_active' => 'boolean',
+        'is_featured' => 'boolean',
+        'on_sale' => 'boolean',
+        'quantity' => 'required|integer|min:0',
+    ]);
+
+    $product = Product::create($validated);
+
+    return response()->json([
+        'message' => 'Product created successfully.',
+        'product' => $product,
+    ], 201);
 }
 
     /**
@@ -86,6 +109,7 @@ public function store(Request $request)
         return response()->json([
             'id' => $product->id,
             'name' => $product->name,
+            'sku' => $product->sku, 
             'description' => $product->description,
             'stock' => $product->quantity,
             'price' => $product->price,

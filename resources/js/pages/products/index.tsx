@@ -23,6 +23,7 @@ type Product = {
   in_stock: boolean;
   id: number;
   name: string;
+   sku?: string;
   image: string | null;
   category: { id: number; name: string } | null;
   brand: { id: number; name: string } | null;
@@ -171,7 +172,7 @@ export default function ProductsIndex() {
             <div className="flex items-end gap-2 mt-2 relative">
               <Input
                 id="product-name"
-                placeholder="Enter product name"
+                placeholder="Enter product name or SKU"
                 type="text"
                 value={search}
                 onChange={handleInputChange}
@@ -204,6 +205,7 @@ export default function ProductsIndex() {
                   <TableRow>
                     <TableHead>#</TableHead>
                     <TableHead>Name</TableHead>
+                    <TableHead>SKU</TableHead>
                     <TableHead>Category</TableHead>
                     <TableHead>Brand</TableHead>
                     <TableHead>Price</TableHead>
@@ -220,6 +222,7 @@ export default function ProductsIndex() {
                         <TableRow key={product.id}>
                           <TableCell>{idx + 1}</TableCell>
                           <TableCell>{product.name}</TableCell>
+                          <TableCell>{product.sku ?? <span className="text-gray-400">No SKU</span>}</TableCell>
                           <TableCell>
                             {product.category ? product.category.name : <span className="text-gray-400">No category</span>}
                           </TableCell>

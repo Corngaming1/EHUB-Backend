@@ -6,39 +6,46 @@ use App\Models\Product;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Response;
 use Inertia\Inertia;
+use Intervention\Image\ImageManager;
+use Intervention\Image\Drivers\Gd\Driver;
 
 class ProductController extends Controller
 {
     public function index(Request $request)
     {
-       $query = Product::with(['category', 'brand'])
-        ->orderBy('created_at', 'desc');
+        $query = Product::with(['category', 'brand'])
+            ->orderBy('created_at', 'desc');
 
     if ($request->has('search') && $request->search !== '') {
-        $query->where('name', 'like', '%' . $request->search . '%');
-    }
+    $search = $request->search;
+    $query->where(function ($q) use ($search) {
+        $q->where('name', 'like', "%$search%")
+          ->orWhere('description', 'like', "%$search%")
+          ->orWhere('sku','like', "%$search%");
+    });
+    }   
 
-    $products = $query->paginate(20)
-        ->through(function ($product) {
-            return [
-                'id' => $product->id,
-                'name' => $product->name,
-                'slug' => $product->slug,
-                'description' => $product->description,
-                'price' => $product->price,
-                'images' => $product->images ?? [],
-                'category' => $product->category?->only('id', 'name'),
-                'brand' => $product->brand?->only('id', 'name'),
-                'in_stock' => $product->in_stock,
-                'is_active' => $product->is_active,
-                'is_featured' => $product->is_featured,
-                'on_sale' => $product->on_sale,
-                'quantity' => $product->quantity,
-            ];
-        });
+        $products = $query->paginate(20)
+            ->through(function ($product) {
+                return [
+                    'id' => $product->id,
+                    'name' => $product->name,
+                    'slug' => $product->slug,
+                    'sku' => $product->sku,
+                    'description' => $product->description,
+                    'price' => $product->price,
+                    'images' => $product->images ?? [],
+                    'category' => $product->category?->only('id', 'name'),
+                    'brand' => $product->brand?->only('id', 'name'),
+                    'in_stock' => $product->in_stock,
+                    'is_active' => $product->is_active,
+                    'is_featured' => $product->is_featured,
+                    'on_sale' => $product->on_sale,
+                    'quantity' => $product->quantity,
+                ];
+            });
 
-
-            return Inertia::render('products/index', [
+        return Inertia::render('products/index', [
             'products' => $products,
             'filters' => $request->only('search'),
         ]);
@@ -57,6 +64,7 @@ class ProductController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'slug' => 'required|string|max:255|unique:products,slug',
+            'sku' => 'nullable|string|unique:products,sku',
             'description' => 'nullable|string',
             'price' => 'required|numeric',
             'images.*' => 'nullable|image|max:2048',
@@ -71,8 +79,13 @@ class ProductController extends Controller
 
         $imagesBase64 = [];
         if ($request->hasFile('images')) {
+            $manager = new ImageManager(new Driver());
             foreach ($request->file('images') as $image) {
-                $imagesBase64[] = base64_encode(file_get_contents($image));
+                $compressed = $manager->read($image)
+                    ->resize(800, null)
+                    ->toJpeg(75); // 75% quality JPEG
+
+                $imagesBase64[] = base64_encode((string) $compressed);
             }
         }
 
@@ -91,6 +104,7 @@ class ProductController extends Controller
             'product' => [
                 'id' => $product->id,
                 'name' => $product->name,
+                'sku' => $product->sku,
                 'slug' => $product->slug,
                 'description' => $product->description,
                 'price' => $product->price,
@@ -116,6 +130,7 @@ class ProductController extends Controller
             'product' => [
                 'id' => $product->id,
                 'name' => $product->name,
+                'sku' => $product->sku,
                 'slug' => $product->slug,
                 'description' => $product->description,
                 'price' => $product->price,
@@ -138,6 +153,7 @@ class ProductController extends Controller
         $validated = $request->validate([
             'name' => 'nullable|string|max:255',
             'slug' => 'nullable|string|max:255|unique:products,slug,' . $product->id,
+            'sku' => 'nullable|string|unique:products,sku,' . $product->id,
             'description' => 'nullable|string',
             'price' => 'nullable|numeric',
             'images.*' => 'nullable|image|max:2048',
@@ -152,8 +168,13 @@ class ProductController extends Controller
 
         if ($request->hasFile('images')) {
             $imagesBase64 = [];
+            $manager = new ImageManager(new Driver());
             foreach ($request->file('images') as $image) {
-                $imagesBase64[] = base64_encode(file_get_contents($image));
+                $compressed = $manager->read($image)
+                    ->resize(800, null)
+                    ->toJpeg(75);
+
+                $imagesBase64[] = base64_encode((string) $compressed);
             }
             $validated['images'] = $imagesBase64;
         } else {
@@ -172,7 +193,6 @@ class ProductController extends Controller
         return redirect()->route('products.index')->with('success', 'Product deleted successfully.');
     }
 
-    // ✅ NEW: Serve base64 image via API
     public function image($id, $index = 0)
     {
         $product = Product::findOrFail($id);

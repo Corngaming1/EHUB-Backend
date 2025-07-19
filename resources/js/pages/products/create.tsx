@@ -26,6 +26,7 @@ export default function CreateProduct({ categories = [], brands = [] }: CreatePr
   const { data, setData, post, processing, errors } = useForm<{
     name: string;
     slug: string;
+    sku: string; 
     description: string;
     price: number | '';
     category_id: number | '';
@@ -39,6 +40,7 @@ export default function CreateProduct({ categories = [], brands = [] }: CreatePr
   }>({
     name: '',
     slug: '',
+    sku: '',
     description: '',
     price: '',
     category_id: '',
@@ -163,6 +165,19 @@ export default function CreateProduct({ categories = [], brands = [] }: CreatePr
                       disabled
                     />
                     {errors.slug && <p className="text-red-600 mt-1">{errors.slug}</p>}
+                  </div>
+
+                  <div className="col-span-2 md:col-span-1">
+                    <Label htmlFor="sku">SKU</Label>
+                    <Input
+                      type="text"
+                      id="sku"
+                      placeholder="SKU"
+                      value={data.sku}
+                      onChange={(e) => setData('sku', e.target.value)}
+                      required
+                    />
+                    {errors.sku && <p className="text-red-600 mt-1">{errors.sku}</p>}
                   </div>
 
                   <div className="col-span-2">

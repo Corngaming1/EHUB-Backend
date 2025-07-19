@@ -20,6 +20,7 @@ type Product = {
   id: number;
   name: string;
   slug: string;
+  sku: string; 
   price: number | string;
   is_active: boolean;
   in_stock: boolean;
@@ -66,6 +67,7 @@ export default function EditProduct({
     quantity: string | number | undefined;
     name: string;
     slug: string;
+     sku: string;
     price: string;
     is_active: boolean;
     in_stock: boolean;
@@ -78,6 +80,7 @@ export default function EditProduct({
   }>({
     name: product.name || '',
     slug: product.slug || '',
+    sku: product.sku || '',
     price: product.price ? String(product.price) : '',
     is_active: !!product.is_active,
     in_stock: !!product.in_stock,
@@ -103,6 +106,7 @@ export default function EditProduct({
     formData.append('_method', 'PUT');
     formData.append('name', data.name);
     formData.append('slug', data.slug);
+    formData.append('sku', data.sku);
     formData.append('price', data.price);
     formData.append('is_active', data.is_active ? '1' : '0');
     formData.append('in_stock', data.in_stock ? '1' : '0');
@@ -179,6 +183,18 @@ export default function EditProduct({
                     />
                     {errors.slug && <p className="text-red-600 mt-1">{errors.slug}</p>}
                   </div>
+
+                  {/* SKU */}
+                  <div className="col-span-2 md:col-span-1">
+                  <Label htmlFor="sku">SKU</Label>
+                  <Input
+                    id="sku"
+                    value={data.sku}
+                    onChange={e => setData('sku', e.target.value)}
+                    className={errors.sku ? 'border-red-600' : ''}
+                  />
+                  {errors.sku && <p className="text-red-600 mt-1">{errors.sku}</p>}
+                </div>
 
                   {/* Price */}
                   <div className="col-span-2 md:col-span-1">
