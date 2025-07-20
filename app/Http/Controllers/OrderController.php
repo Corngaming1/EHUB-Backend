@@ -26,6 +26,8 @@ class OrderController extends Controller
                     'shipping_amount' => $order->shipping_amount,
                     'shipping_method' => $order->shipping_method,
                     'notes' => $order->notes,
+                    'phone' => $order->phone,
+                    'location' => $order->location,
                     'user' => $order->user ? $order->user->only(['id', 'name']) : null,
                     'created_at' => $order->created_at,
                     'updated_at' => $order->updated_at,
@@ -56,110 +58,131 @@ class OrderController extends Controller
         ]);
     }
 
+    // ✅ Corrected store() method
     public function store(Request $request)
     {
-        $validatedOrder = $request->validate([
-            'user_id' => 'required|exists:users,id',
-            'payment_method' => 'required|string|max:255',
-            'payment_status' => 'required|string|max:255',
-            'status' => 'required|in:new,processing,shipped,delivered,canceled',
-            'currency' => 'required|string|max:10',
-            'shipping_amount' => 'nullable|numeric',
-            'shipping_method' => 'nullable|string|max:255',
-            'notes' => 'nullable|string',
-            'items' => 'required|array|min:1',
-            'items.*.product_id' => 'required|exists:products,id',
-            'items.*.quantity' => 'required|integer|min:1',
-        ]);
-
-        $order = Order::create($validatedOrder);
-
-        $grandTotal = 0;
-
-        foreach ($validatedOrder['items'] as $itemData) {
-            $product = Product::findOrFail($itemData['product_id']);
-
-            if (!$product->is_active) {
-                return back()->withErrors(['items' => "Product {$product->name} is not active."]);
-            }
-
-            if ($product->quantity < $itemData['quantity']) {
-                return back()->withErrors(['items' => "Only {$product->quantity} of {$product->name} available."]);
-            }
-
-            $order->items()->create([
-                'product_id' => $product->id,
-                'quantity' => $itemData['quantity'],
-                'unit_amount' => $product->price,
+        try {
+            $validatedOrder = $request->validate([
+                'user_id' => 'required|exists:users,id',
+                'payment_method' => 'required|string|max:255',
+                'payment_status' => 'required|string|max:255',
+                'status' => 'required|in:new,processing,shipped,delivered,canceled',
+                'currency' => 'required|string|max:10',
+                'shipping_amount' => 'nullable|numeric',
+                'shipping_method' => 'nullable|string|max:255',
+                'notes' => 'nullable|string',
+                'phone' => 'nullable|string|max:255',
+                'location' => 'nullable|string|max:255',
+                'items' => 'required|array|min:1',
+                'items.*.product_id' => 'required|exists:products,id',
+                'items.*.quantity' => 'required|integer|min:1',
             ]);
 
-            $grandTotal += $product->price * $itemData['quantity'];
-            $product->quantity -= $itemData['quantity'];
-            $product->save();
+            $grandTotal = 0;
+            $itemDataList = [];
+
+            foreach ($validatedOrder['items'] as $itemData) {
+                $product = Product::findOrFail($itemData['product_id']);
+
+                if (!$product->is_active) {
+                    return response()->json(['message' => "Product {$product->name} is not active."], 422);
+                }
+
+                if ($product->quantity < $itemData['quantity']) {
+                    return response()->json(['message' => "Only {$product->quantity} of {$product->name} available."], 422);
+                }
+
+                $unitAmount = $product->price;
+                $grandTotal += $unitAmount * $itemData['quantity'];
+
+                $itemDataList[] = [
+                    'product' => $product,
+                    'quantity' => $itemData['quantity'],
+                    'unit_amount' => $unitAmount,
+                ];
+            }
+
+            $order = Order::create([
+                'user_id' => $validatedOrder['user_id'],
+                'payment_method' => $validatedOrder['payment_method'],
+                'payment_status' => $validatedOrder['payment_status'],
+                'status' => $validatedOrder['status'],
+                'currency' => $validatedOrder['currency'],
+                'shipping_amount' => $validatedOrder['shipping_amount'] ?? 0,
+                'shipping_method' => $validatedOrder['shipping_method'] ?? null,
+                'notes' => $validatedOrder['notes'] ?? null,
+                'phone' => $validatedOrder['phone'] ?? null,
+                'location' => $validatedOrder['location'] ?? null,
+                'grand_total' => $grandTotal,
+            ]);
+
+            foreach ($itemDataList as $item) {
+                $order->items()->create([
+                    'product_id' => $item['product']->id,
+                    'quantity' => $item['quantity'],
+                    'unit_amount' => $item['unit_amount'],
+                ]);
+
+                $item['product']->quantity -= $item['quantity'];
+                $item['product']->save();
+            }
+
+            return response()->json(['message' => 'Order created successfully', 'order_id' => $order->id], 201);
+        } catch (\Exception $e) {
+            return response()->json(['message' => 'Unexpected error', 'error' => $e->getMessage()], 500);
         }
-
-        $order->grand_total = $grandTotal;
-        $order->save();
-
-        return redirect()->route('orders.index')->with('success', 'Order created successfully.');
     }
 
-    public function show(Order $order)
-    {
-        $order->load(['user', 'items.product']);
 
-        return Inertia::render('orders/show', [
-            'order' => [
-                'id' => $order->id,
-                'grand_total' => $order->grand_total,
-                'payment_method' => $order->payment_method,
-                'payment_status' => $order->payment_status,
-                'status' => $order->status,
-                'currency' => $order->currency,
-                'shipping_amount' => $order->shipping_amount,
-                'shipping_method' => $order->shipping_method,
-                'notes' => $order->notes,
-                'user' => $order->user ? $order->user->only(['id', 'name']) : null,
-                'items' => $order->items->map(fn($item) => [
+public function show(Order $order)
+{
+    $order->load(['user', 'items.product']);
+
+    return Inertia::render('orders/show', [
+        'order' => [
+            'id' => $order->id,
+            'grand_total' => $order->grand_total,
+            'payment_method' => $order->payment_method,
+            'payment_status' => $order->payment_status,
+            'status' => $order->status,
+            'currency' => $order->currency,
+            'shipping_amount' => $order->shipping_amount,
+            'shipping_method' => $order->shipping_method,
+            'notes' => $order->notes,
+            'phone' => $order->phone, // ✅ ADDED
+            'location' => $order->location, // ✅ ADDED
+            'created_at' => $order->created_at,
+            'updated_at' => $order->updated_at,
+            'user' => $order->user ? [
+                'id' => $order->user->id,
+                'name' => $order->user->name,
+                'email' => $order->user->email, // ✅ ADDED
+            ] : null,
+            'items' => $order->items->map(function ($item) {
+                return [
                     'id' => $item->id,
                     'quantity' => $item->quantity,
                     'unit_amount' => $item->unit_amount,
-                    'product' => $item->product ? $item->product->only(['id', 'name', 'price']) : null,
-                ]),
-                'created_at' => $order->created_at,
-                'updated_at' => $order->updated_at,
-            ],
-        ]);
-    }
+                    'product' => $item->product ? [
+                        'id' => $item->product->id,
+                        'name' => $item->product->name,
+                        'price' => $item->product->price,
+                    ] : null,
+                ];
+            }),
+        ],
+    ]);
+}
 
-    public function edit(Order $order)
-    {
-        $order->load('user');
 
-        return Inertia::render('orders/edit', [
-            'order' => [
-                'id' => $order->id,
-                'grand_total' => $order->grand_total,
-                'payment_method' => $order->payment_method,
-                'payment_status' => $order->payment_status,
-                'status' => $order->status,
-                'currency' => $order->currency,
-                'shipping_amount' => $order->shipping_amount,
-                'shipping_method' => $order->shipping_method,
-                'notes' => $order->notes,
-                'user_id' => $order->user_id,
-            ],
-            'users' => User::all(['id', 'name']),
-            'products' => Product::all(['id', 'name', 'price', 'quantity', 'is_active']),
-        ]);
-    }
+
 
     public function update(Request $request, $id)
     {
         $order = Order::findOrFail($id);
 
         $validated = $request->validate([
-            'user_id' => 'required|exists:users,id',
+            //'user_id' => 'required|exists:users,id',
             'payment_method' => 'required|string',
             'payment_status' => 'required|string',
             'status' => 'required|string',
@@ -167,6 +190,8 @@ class OrderController extends Controller
             'shipping_amount' => 'required|numeric',
             'shipping_method' => 'required|string',
             'notes' => 'nullable|string',
+            'phone' => 'nullable|string|max:255',
+            'location' => 'nullable|string|max:255',
             'items' => 'required|array',
             'items.*.id' => 'nullable|integer',
             'items.*.product_id' => 'required|exists:products,id',
@@ -236,8 +261,8 @@ class OrderController extends Controller
     public function unarchive($id)
     {
         $order = Order::findOrFail($id);
-        $order-> status = 'canceled';
-        $order-> payment_status = 'failed';
+        $order->status = 'canceled';
+        $order->payment_status = 'failed';
         $order->archived = false;
         $order->save();
 
@@ -260,6 +285,8 @@ class OrderController extends Controller
                     'shipping_amount' => $order->shipping_amount,
                     'shipping_method' => $order->shipping_method,
                     'notes' => $order->notes,
+                    'phone' => $order->phone,
+                    'location' => $order->location,
                     'user' => $order->user ? $order->user->only(['id', 'name']) : null,
                     'created_at' => $order->created_at,
                     'updated_at' => $order->updated_at,
