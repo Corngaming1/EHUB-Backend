@@ -5,8 +5,10 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Order;
 use App\Models\OrderItem;
+use App\Models\Product;
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
 class ApiOrderController extends Controller
@@ -50,42 +52,69 @@ class ApiOrderController extends Controller
             'total' => 'required|numeric',
         ]);
 
-        // Create or find user
-        $user = User::firstOrCreate(
-            ['email' => $request->email],
-            [
-                'name' => 'Guest_' . Str::random(5),
-                'password' => Hash::make(Str::random(8)),
-            ]
-        );
+        DB::beginTransaction();
 
-        // Create order
-        $order = Order::create([
-            'user_id' => $user->id,
-            'grand_total' => $request->total,
-            'payment_method' => $request->deliveryOption,
-            'payment_status' => 'Pending',
-            'status' => 'new',
-            'currency' => 'PHP',
-            'shipping_amount' => 0,
-            'shipping_method' => $request->deliveryOption,
-            'phone' => $request->phone,
-            'location' => $request->location,
-            'notes' => 'Web checkout order',
-        ]);
+        try {
+            // Create or find user
+            $user = User::firstOrCreate(
+                ['email' => $request->email],
+                [
+                    'name' => 'Guest_' . Str::random(5),
+                    'password' => Hash::make(Str::random(8)),
+                ]
+            );
 
-        // Create order items
-        foreach ($request->cart as $item) {
-            OrderItem::create([
-                'order_id' => $order->id,
-                'product_id' => $item['id'],
-                'quantity' => $item['quantity'],
-                'unit_amount' => $item['price'],
-                'total_amount' => $item['price'] * $item['quantity'],
+            // Create order
+            $order = Order::create([
+                'user_id' => $user->id,
+                'grand_total' => $request->total,
+                'payment_method' => $request->deliveryOption,
+                'payment_status' => 'Pending',
+                'status' => 'new',
+                'currency' => 'PHP',
+                'shipping_amount' => 0,
+                'shipping_method' => $request->deliveryOption,
+                'phone' => $request->phone,
+                'location' => $request->location,
+                'notes' => 'Web checkout order',
             ]);
-        }
 
-        return response()->json(['message' => 'Order placed successfully'], 201);
+            // Create order items and reduce product quantity
+            foreach ($request->cart as $item) {
+                $product = Product::find($item['id']);
+
+                if (!$product || !$product->is_active) {
+                    DB::rollBack();
+                    return response()->json(['message' => "Product not found or inactive."], 404);
+                }
+
+                if ($product->quantity < $item['quantity']) {
+                    DB::rollBack();
+                    return response()->json(['message' => "Not enough stock for {$product->name}."], 422);
+                }
+
+                // Create order item
+                OrderItem::create([
+                    'order_id' => $order->id,
+                    'product_id' => $item['id'],
+                    'quantity' => $item['quantity'],
+                    'unit_amount' => $item['price'],
+                    'total_amount' => $item['price'] * $item['quantity'],
+                ]);
+
+                // Reduce product quantity
+                $product->quantity -= $item['quantity'];
+                $product->save();
+            }
+
+            DB::commit();
+
+            return response()->json(['message' => 'Order placed successfully'], 201);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json(['message' => 'Something went wrong', 'error' => $e->getMessage()], 500);
+        }
     }
 
     public function show(string $id)

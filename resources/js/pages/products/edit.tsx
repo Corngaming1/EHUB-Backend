@@ -31,6 +31,7 @@ type Product = {
   brand_id?: number;
   quantity: number | '';
   description?: string;
+   discount_percentage?: number
 };
 
 type Category = { id: number; name: string };
@@ -48,6 +49,7 @@ export default function EditProduct({
   const [selectedImages, setSelectedImages] = useState<File[]>([]);
   const [previewUrls, setPreviewUrls] = useState<string[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [showDiscountInput, setShowDiscountInput] = useState(!!product.on_sale);
 
   // Generate preview URLs for selected images
   useEffect(() => {
@@ -77,6 +79,7 @@ export default function EditProduct({
     brand_id: number | '';
     images?: File[];
     description?: string;
+    discount_percentage: number | '';
   }>({
     name: product.name || '',
     slug: product.slug || '',
@@ -90,7 +93,12 @@ export default function EditProduct({
     brand_id: product.brand_id ?? '',
     quantity: product.quantity ?? '',
     description: product.description || '',
+    discount_percentage: product.discount_percentage ?? '',
   });
+
+  useEffect(() => {
+  setShowDiscountInput(data.on_sale);
+}, [data.on_sale]);
 
   function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     if (e.target.files) {
@@ -112,11 +120,15 @@ export default function EditProduct({
     formData.append('in_stock', data.in_stock ? '1' : '0');
     formData.append('is_featured', data.is_featured ? '1' : '0');
     formData.append('on_sale', data.on_sale ? '1' : '0');
+    formData.append(
+      'discount_percentage',
+      data.discount_percentage !== '' ? String(data.discount_percentage) : ''
+    );
     formData.append('category_id', data.category_id ? String(data.category_id) : '');
     formData.append('brand_id', data.brand_id ? String(data.brand_id) : '');
     formData.append('quantity', data.quantity !== '' ? String(data.quantity) : '0');
     formData.append('description', data.description || '');
-
+ 
     selectedImages.forEach((file, index) => {
       formData.append(`images[${index}]`, file);
     });
@@ -358,14 +370,38 @@ export default function EditProduct({
                           <span>Featured</span>
                         </label>
 
-                        <label className="flex items-center gap-2">
-                          <input
-                            type="checkbox"
-                            checked={data.on_sale}
-                            onChange={(e) => setData('on_sale', e.target.checked)}
-                          />
-                          <span>On Sale</span>
-                        </label>
+                     <label className="flex items-center gap-2">
+                      <input
+                        type="checkbox"
+                        checked={data.on_sale}
+                        onChange={(e) => setData('on_sale', e.target.checked)}
+                      />
+                      <span>On Sale</span>
+                    </label>
+
+                    {showDiscountInput && (
+                      <div className="mt-2">
+                        <Label htmlFor="discount_percentage">Discount %</Label>
+                        <Input
+                          id="discount_percentage"
+                          type="number"
+                          min={0}
+                          max={100}
+                          placeholder="Enter discount percentage"
+                          value={data.discount_percentage}
+                          onChange={(e) =>
+                            setData(
+                              'discount_percentage',
+                              e.target.value === '' ? '' : Number(e.target.value)
+                            )
+                          }
+                          className={errors.discount_percentage ? 'border-red-600 mt-1' : 'mt-1'}
+                        />
+                        {errors.discount_percentage && (
+                          <p className="text-red-600 text-sm">{errors.discount_percentage}</p>
+                        )}
+                      </div>
+                    )}
                       </div>
 
                   {/* Submit */}

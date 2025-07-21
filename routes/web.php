@@ -35,6 +35,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Products resource accessible by admin and staff
     Route::middleware('role:admin,staff')->group(function () {
 
+      
+        Route::get('/admin/products/{product}/adjust-stock', [ProductController::class, 'adjustStock'])->name('products.adjust-stock');
+        Route::put('/admin/products/{product}/update-stock', [ProductController::class, 'updateStock'])->name('products.update-stock');
         Route::get('/products/{id}/image/{index?}', [ProductController::class, 'image'])->name('products.image');
         Route::put('/orders/{order}/mark-completed', [OrderController::class, 'markAsCompleted'])->name('orders.markAsCompleted');
         Route::get('/orders/archived', [OrderController::class, 'archived'])->name('orders.archived');

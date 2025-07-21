@@ -21,6 +21,7 @@ type Product = {
   is_active: boolean;
   is_featured: boolean;
   on_sale: boolean;
+  discount_percentage?: number;
   created_at: string;
   updated_at: string;
 };
@@ -100,13 +101,30 @@ export default function Show() {
                   <p className="whitespace-pre-line mt-1">{product.description || 'No description provided.'}</p>
                 </div>
                 <div>
-                  <strong>Price:</strong>{' '}
-                  {product.price !== undefined && product.price !== null && !isNaN(Number(product.price)) ? (
-                    <span>₱{Number(product.price).toFixed(2)}</span>
+                <strong>Price:</strong>{' '}
+                {product.price !== undefined && product.price !== null && !isNaN(Number(product.price)) ? (
+                  product.on_sale && Number(product.discount_percentage) > 0 ? (
+                    <>
+                      <span className="line-through text-gray-500 me-2">
+                        ₱{Number(product.price).toFixed(2)}
+                      </span>
+                      <span className="text-green-600 font-semibold">
+                        ₱{(
+                          Number(product.price) *
+                          (1 - Number(product.discount_percentage || 0) / 100)
+                        ).toFixed(2)}
+                      </span>
+                      <span className="ml-2 text-sm text-red-500 font-medium">
+                        ({Number(product.discount_percentage)}% OFF)
+                      </span>
+                    </>
                   ) : (
-                    <span className="text-gray-400">No price</span>
-                  )}
-                </div>
+                    <span>₱{Number(product.price).toFixed(2)}</span>
+                  )
+                ) : (
+                  <span className="text-gray-400">No price</span>
+                )}
+              </div>
                 <div>
                   <strong>Category:</strong>{' '}
                   {product.category ? product.category.name : <span className="text-gray-400">No category</span>}

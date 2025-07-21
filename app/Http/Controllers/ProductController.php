@@ -41,6 +41,7 @@ class ProductController extends Controller
                     'is_active' => $product->is_active,
                     'is_featured' => $product->is_featured,
                     'on_sale' => $product->on_sale,
+                    'discount_percentage' => $product->discount_percentage, // ← ADD THIS LINE
                     'quantity' => $product->quantity,
                 ];
             });
@@ -74,6 +75,17 @@ class ProductController extends Controller
             'is_active' => 'boolean',
             'is_featured' => 'boolean',
             'on_sale' => 'boolean',
+            'discount_percentage' => [
+            'nullable',
+            'numeric',
+            'min:0',
+            'max:100',
+            function ($attribute, $value, $fail) use ($request) {
+                if ($request->on_sale && ($value === null || $value === '')) {
+                    $fail('Discount percentage is required when product is on sale.');
+                }
+            },
+        ],
             'quantity' => 'required|integer|min:0',
         ]);
 
@@ -115,6 +127,7 @@ class ProductController extends Controller
                 'is_active' => $product->is_active,
                 'is_featured' => $product->is_featured,
                 'on_sale' => $product->on_sale,
+                'discount_percentage' => $product->discount_percentage, // ✅ THIS
                 'created_at' => $product->created_at,
                 'updated_at' => $product->updated_at,
                 'quantity' => $product->quantity,
@@ -141,6 +154,7 @@ class ProductController extends Controller
                 'is_active' => $product->is_active,
                 'is_featured' => $product->is_featured,
                 'on_sale' => $product->on_sale,
+                'discount_percentage' => $product->discount_percentage,
                 'quantity' => $product->quantity,
             ],
             'categories' => \App\Models\Category::all(['id', 'name']),
@@ -150,21 +164,36 @@ class ProductController extends Controller
 
     public function update(Request $request, Product $product)
     {
-        $validated = $request->validate([
-            'name' => 'nullable|string|max:255',
-            'slug' => 'nullable|string|max:255|unique:products,slug,' . $product->id,
-            'sku' => 'nullable|string|unique:products,sku,' . $product->id,
-            'description' => 'nullable|string',
-            'price' => 'nullable|numeric',
-            'images.*' => 'nullable|image|max:2048',
-            'category_id' => 'nullable|exists:categories,id',
-            'brand_id' => 'nullable|exists:brands,id',
-            'in_stock' => 'boolean',
-            'is_active' => 'boolean',
-            'is_featured' => 'boolean',
-            'on_sale' => 'boolean',
-            'quantity' => 'required|integer|min:0',
-        ]);
+           $validated = $request->validate([
+        'name' => 'required|string',
+        'slug' => 'required|string',
+        'sku' => 'required|string',
+        'price' => 'required|numeric',
+        'description' => 'nullable|string',
+        'category_id' => 'nullable|exists:categories,id',
+        'brand_id' => 'nullable|exists:brands,id',
+        'is_active' => 'boolean',
+        'in_stock' => 'boolean',
+        'is_featured' => 'boolean',
+        'on_sale' => 'boolean',
+        'discount_percentage' => [
+        'nullable',
+        'numeric',
+        'min:0',
+        'max:100',
+        function ($attribute, $value, $fail) use ($request) {
+            if ($request->on_sale && ($value === null || $value === '')) {
+                $fail('Discount percentage is required when product is on sale.');
+            }
+        },
+    ],
+        'quantity' => 'nullable|integer|min:0', // Make quantity optional
+    ]);
+
+        // Don’t trust the quantity from frontend
+            unset($validated['quantity']);
+
+            $product->update($validated);
 
         if ($request->hasFile('images')) {
             $imagesBase64 = [];
@@ -209,4 +238,23 @@ class ProductController extends Controller
             'Content-Disposition' => 'inline; filename="product_' . $id . '_img' . $index . '.jpg"',
         ]);
     }
+
+    public function adjustStock(Product $product)
+{
+    return Inertia::render('Products/AdjustStock', [
+        'product' => $product
+    ]);
+}
+
+public function updateStock(Request $request, Product $product)
+{
+    $validated = $request->validate([
+        'quantity' => 'required|integer|min:0'
+    ]);
+
+    $product->quantity = $validated['quantity'];
+    $product->save();
+
+    return redirect()->route('products.index')->with('success', 'Stock updated successfully.');
+}
 }

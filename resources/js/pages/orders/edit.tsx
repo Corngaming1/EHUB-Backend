@@ -18,6 +18,7 @@ type Product = {
   id: number;
   name: string;
   price: number;
+  quantity: number;
 };
 
 type User = {
@@ -43,6 +44,7 @@ type Order = {
   shipping_method: string;
   notes: string;
   items: OrderItem[];
+  location: string;
 };
 
 type FormOrderItem = {
@@ -72,6 +74,7 @@ export default function EditOrder({
     notes: string;
     items: FormOrderItem[];
     grand_total?: string;
+    location: string;
   }>({
     user_id: order.user_id || '',
     payment_method: order.payment_method || 'COD',
@@ -81,6 +84,7 @@ export default function EditOrder({
     shipping_amount: order.shipping_amount ?? 0,
     shipping_method: order.shipping_method || 'for_Pickup',
     notes: order.notes || '',
+    location: order.location || '',
     items:
       order.items?.map((item: OrderItem) => ({
         id: item.id,
@@ -113,24 +117,31 @@ export default function EditOrder({
     setData('items', newItems);
   }
 
-  function handleQuantityChange(index: number, quantity: number) {
-    const newItems = [...data.items];
-    newItems[index].quantity = quantity > 0 ? quantity : 1;
-    setData('items', newItems);
-  }
+function handleQuantityChange(index: number, quantity: number) {
+  const product = products.find(p => p.id === data.items[index].product_id);
+  const maxQty = product?.quantity ?? 1;
+  const safeQty = Math.min(Math.max(quantity, 1), maxQty);
 
-  function addItem() {
-    if (products.length === 0) return;
-    setData('items', [
-      ...data.items,
-      {
-        id: 0,
-        product_id: products[0].id,
-        quantity: 1,
-        unit_amount: products[0].price,
-      },
-    ]);
-  }
+  const newItems = [...data.items];
+  newItems[index].quantity = safeQty;
+  setData('items', newItems);
+}
+
+function addItem() {
+  const selectedIds = data.items.map((item) => item.product_id);
+  const availableProduct = products.find((p) => !selectedIds.includes(p.id));
+  if (!availableProduct) return; // All products selected
+
+  setData('items', [
+    ...data.items,
+    {
+      id: 0,
+      product_id: availableProduct.id,
+      quantity: 1,
+      unit_amount: availableProduct.price,
+    },
+  ]);
+}
 
   function removeItem(index: number) {
     const newItems = data.items.filter((_, i) => i !== index);
@@ -150,6 +161,7 @@ export default function EditOrder({
     formData.append('shipping_amount', String(data.shipping_amount));
     formData.append('shipping_method', data.shipping_method);
     formData.append('notes', data.notes);
+    formData.append('location', data.location);
 
     data.items.forEach((item, index) => {
       formData.append(`items[${index}][id]`, String(item.id));
@@ -210,8 +222,14 @@ export default function EditOrder({
                         className="border rounded px-3 py-2 flex-grow"
                         required
                       >
-                        {products.map((product) => (
-                          <option key={product.id} value={product.id}>
+                       {products.map((product) => (
+                          <option
+                            key={product.id}
+                            value={product.id}
+                            disabled={
+                              data.items.some((item, i) => item.product_id === product.id && i !== index)
+                            }
+                          >
                             {product.name} (₱{product.price})
                           </option>
                         ))}
@@ -399,6 +417,19 @@ export default function EditOrder({
                   />
                   {errors.notes && <p className="text-red-600">{errors.notes}</p>}
                 </div>
+
+              {/* Location */}
+              <div className="col-span-2">
+                <Label htmlFor="location">Location</Label>
+                <Input
+                  type="text"
+                  id="location"
+                  placeholder="Location"
+                  value={data.location}
+                  onChange={(e) => setData('location', e.target.value)}
+                />
+                {errors.location && <p className="text-red-600">{errors.location}</p>}
+              </div>
 
                 {/* Submit Button */}
                 <div className="col-span-2 mt-4">

@@ -57,6 +57,8 @@ class ApiProductController extends Controller
             'description' => $product->description,
             'stock' => $product->quantity,
             'price' => $product->price,
+            'on_sale' => $product->on_sale, // ← ADD
+            'discount_percentage' => $product->discount_percentage, // ← ADD
             'category' => $product->category ? [
                 'id' => $product->category->id,
                 'name' => $product->category->name,
@@ -113,6 +115,8 @@ public function store(Request $request)
             'description' => $product->description,
             'stock' => $product->quantity,
             'price' => $product->price,
+            'on_sale' => $product->on_sale, // ✅ Add this
+            'discount_percentage' => $product->discount_percentage, // ✅ Add this
             'images' => is_array($product->images)
     ? array_map(fn($img) => 'data:image/*;base64,' . $img, $product->images)
     : [],

@@ -1,3 +1,4 @@
+// [unchanged imports at top]
 import { useState, useRef, useEffect } from 'react';
 import { Inertia } from '@inertiajs/inertia';
 import { usePage, Head, Link } from '@inertiajs/react';
@@ -23,13 +24,15 @@ type Product = {
   in_stock: boolean;
   id: number;
   name: string;
-   sku?: string;
+  sku?: string;
   image: string | null;
   category: { id: number; name: string } | null;
   brand: { id: number; name: string } | null;
   is_active: boolean;
   price?: number;
   quantity?: number;
+  discount_percentage?: number;
+  on_sale?: boolean;
 };
 
 type PaginatedProducts = {
@@ -51,7 +54,6 @@ const breadcrumbs: BreadcrumbItem[] = [
   },
 ];
 
-// Skeleton loader for table rows
 function SkeletonRow() {
   return (
     <TableRow>
@@ -67,10 +69,9 @@ function SkeletonRow() {
 export default function ProductsIndex() {
   const { products, filters } = usePage<ProductsPageProps>().props;
   const [search, setSearch] = useState(filters?.search || '');
-  const [debouncedSearch] = useDebounce(search, 400); // 400ms debounce
+  const [debouncedSearch] = useDebounce(search, 400);
   const [loading, setLoading] = useState(false);
 
-  // Defensive check
   if (!products || !Array.isArray(products.data) || !Array.isArray(products.links)) {
     return (
       <AppLayout breadcrumbs={breadcrumbs}>
@@ -80,7 +81,6 @@ export default function ProductsIndex() {
     );
   }
 
-  // Loading spinner logic
   useEffect(() => {
     const unsubscribeStart = Inertia.on('start', () => setLoading(true));
     const unsubscribeFinish = Inertia.on('finish', () => setLoading(false));
@@ -90,27 +90,22 @@ export default function ProductsIndex() {
     };
   }, []);
 
-
-
-  // Search handlers
   function handleInputChange(e: React.ChangeEvent<HTMLInputElement>) {
     setSearch(e.target.value);
   }
 
- function handleKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
-  if (e.key === 'Enter') {
-    Inertia.get('/products', { search: debouncedSearch }, { preserveState: true, replace: true });
+  function handleKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
+    if (e.key === 'Enter') {
+      Inertia.get('/products', { search: debouncedSearch }, { preserveState: true, replace: true });
+    }
   }
-}
 
-  // Example delete handler (customize as needed)
   function handleDelete(id: number) {
     if (confirm('Are you sure you want to delete this product?')) {
       Inertia.delete(`/products/${id}`);
     }
   }
 
-  // Example menu logic (customize as needed)
   const [openMenuId, setOpenMenuId] = useState<number | null>(null);
   const [menuPosition, setMenuPosition] = useState<{ left: number; top: number } | null>(null);
   const buttonRefs = useRef<{ [key: number]: HTMLButtonElement | null }>({});
@@ -159,7 +154,6 @@ export default function ProductsIndex() {
   return (
     <AppLayout breadcrumbs={breadcrumbs}>
       <Head title="Products" />
-      {/* Loading overlay */}
       {loading && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-white/70">
           <div className="animate-spin rounded-full h-12 w-12 border-t-4 border-blue-600 border-solid"></div>
@@ -229,13 +223,23 @@ export default function ProductsIndex() {
                           <TableCell>
                             {product.brand ? product.brand.name : <span className="text-gray-400">No brand</span>}
                           </TableCell>
-                          <TableCell>
-                            {product.price !== undefined && product.price !== null ? (
-                              <span>₱{product.price}</span>
-                            ) : (
-                              <span className="text-gray-400">No price</span>
-                            )}
-                          </TableCell>
+                        <TableCell>
+                      {product.on_sale && Number(product.discount_percentage) > 0 ? (
+                        <>
+                          <span className="line-through text-gray-500 me-1">
+                            ₱{Number(product.price).toFixed(2)}
+                          </span>
+                          <span className="text-green-600 font-semibold">
+                            ₱{(
+                              Number(product.price) *
+                              (1 - Number(product.discount_percentage) / 100)
+                            ).toFixed(2)}
+                          </span>
+                        </>
+                      ) : (
+                        <span>₱{Number(product.price).toFixed(2)}</span>
+                      )}
+                    </TableCell>
                           <TableCell>
                             {typeof product.quantity === 'number' ? product.quantity : 0}
                           </TableCell>
@@ -314,7 +318,6 @@ export default function ProductsIndex() {
                   }
                 </TableBody>
               </Table>
-              {/* Pagination */}
               <div className="flex justify-center mt-4 gap-1">
                 {products.links.map((link, idx) => (
                   <button
