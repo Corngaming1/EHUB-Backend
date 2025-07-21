@@ -45,4 +45,9 @@ class Order extends Model
 {
     return $this->hasMany(Order::class);
 }
+
+public function voucherRequests()
+{
+    return $this->hasMany(\App\Models\VoucherRequest::class);
+}
 }

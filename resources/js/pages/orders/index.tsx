@@ -22,8 +22,14 @@ type OrderItem = {
   id: number;
   product_id: number;
   quantity: number;
-  // Optionally, include product info:
   product?: { id: number; name: string };
+};
+
+type VoucherInfo = {
+  code: string;
+  status: string;
+  discount_amount: string;
+  type: string;
 };
 
 type Order = {
@@ -38,6 +44,7 @@ type Order = {
   notes: string | null;
   user: { id: number; name: string } | null;
   items: OrderItem[];
+  voucher?: VoucherInfo | null;
 };
 
 type PageProps = {
@@ -59,7 +66,7 @@ const breadcrumbs: BreadcrumbItem[] = [
 ];
 
 export default function OrdersIndex() {
-   const { flash } = usePage<{ flash: FlashProps } & PageProps>().props;
+  const { flash } = usePage<{ flash: FlashProps } & PageProps>().props;
 
   const [openMenuId, setOpenMenuId] = useState<number | null>(null);
   const [menuPosition, setMenuPosition] = useState<{ left: number; top: number } | null>(null);
@@ -100,15 +107,14 @@ export default function OrdersIndex() {
     }
   }
 
- function handleMarkAsCompleted(orderId: number) {
-  if (confirm('Mark this order as completed and delivered?')) {
-    Inertia.put(route('orders.markAsCompleted', orderId), {
-      status: 'delivered',         // ✅ string, not variable
-      payment_status: 'paid' // ✅ string, not variable
-    });
+  function handleMarkAsCompleted(orderId: number) {
+    if (confirm('Mark this order as completed and delivered?')) {
+      Inertia.put(route('orders.markAsCompleted', orderId), {
+        status: 'delivered',
+        payment_status: 'paid'
+      });
+    }
   }
-}
-
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -151,15 +157,14 @@ export default function OrdersIndex() {
                   <span className="max-sm:sr-only">Add new Order</span>
                 </Button>
               </Link>
-              
-            <Link href="/orders/archived">
-              <Button
-                variant="outline"
-                className="ml-2 bg-gray-100 hover:bg-gray-200 text-gray-700 transition active:scale-95"
-              >
-                Archived Orders
-              </Button>
-            </Link>
+              <Link href="/orders/archived">
+                <Button
+                  variant="outline"
+                  className="ml-2 bg-gray-100 hover:bg-gray-200 text-gray-700 transition active:scale-95"
+                >
+                  Archived Orders
+                </Button>
+              </Link>
             </div>
           </div>
           <Card>
@@ -168,7 +173,7 @@ export default function OrdersIndex() {
                 <TableHeader>
                   <TableRow>
                     <TableHead>
-                    <input type="checkbox" disabled />
+                      <input type="checkbox" disabled />
                     </TableHead>
                     <TableHead>#</TableHead>
                     <TableHead>User</TableHead>
@@ -176,7 +181,9 @@ export default function OrdersIndex() {
                     <TableHead>Grand Total</TableHead>
                     <TableHead>Payment Method</TableHead>
                     <TableHead>Payment Status</TableHead>
-                    <TableHead>Quantity</TableHead> {/* New column */}
+                    <TableHead>Quantity</TableHead>
+                    <TableHead>Voucher</TableHead>
+                    <TableHead>Discounted Total</TableHead>
                     <TableHead>Action</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -203,6 +210,18 @@ export default function OrdersIndex() {
                         {getOrderTotalQuantity(order)}
                       </TableHead>
                       <TableHead>
+                        {order.voucher
+                          ? `${order.voucher.code} (${order.voucher.status})`
+                          : '—'}
+                      </TableHead>
+                      <TableHead>
+                        {order.voucher && order.voucher.status === 'approved'
+                          ? order.voucher.type === 'fixed'
+                            ? `₱${(parseFloat(order.grand_total) - parseFloat(order.voucher.discount_amount)).toFixed(2)}`
+                            : `₱${(parseFloat(order.grand_total) * (1 - parseFloat(order.voucher.discount_amount) / 100)).toFixed(2)}`
+                          : `₱${order.grand_total}`}
+                      </TableHead>
+                      <TableHead>
                         <div className="relative">
                           <Button
                             ref={el => { buttonRefs.current[order.id] = el; }}
@@ -227,33 +246,33 @@ export default function OrdersIndex() {
                               onClick={e => e.stopPropagation()}
                             >
                               <div className="py-1 flex flex-col">
-                                  <Link href={route('orders.show', order.id)}>
-                                    <button
-                                      className="w-full text-left px-4 py-2 text-sm hover:bg-blue-100 dark:hover:bg-blue-900 cursor-pointer transition active:scale-95 focus:outline-none focus:ring-2 focus:ring-blue-400"
-                                      onClick={handleMenuClose}
-                                    >
-                                      Show
-                                    </button>
-                                  </Link>
-                                  <Link href={route('orders.edit', order.id)}>
-                                    <button
-                                      className="w-full text-left px-4 py-2 text-sm hover:bg-blue-100 dark:hover:bg-blue-900 cursor-pointer transition active:scale-95 focus:outline-none focus:ring-2 focus:ring-blue-400"
-                                      onClick={handleMenuClose}
-                                    >
-                                      Edit
-                                    </button>
-                                  </Link>
-                                  <hr className="my-1" />
+                                <Link href={route('orders.show', order.id)}>
                                   <button
-                                    className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-100 dark:hover:bg-red-900 cursor-pointer transition active:scale-95 focus:outline-none focus:ring-2 focus:ring-red-400"
-                                    onClick={() => {
-                                      handleMenuClose();
-                                      handleDelete(order.id);
-                                    }}
+                                    className="w-full text-left px-4 py-2 text-sm hover:bg-blue-100 dark:hover:bg-blue-900 cursor-pointer transition active:scale-95 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                                    onClick={handleMenuClose}
                                   >
-                                    Delete
+                                    Show
                                   </button>
-                                </div>
+                                </Link>
+                                <Link href={route('orders.edit', order.id)}>
+                                  <button
+                                    className="w-full text-left px-4 py-2 text-sm hover:bg-blue-100 dark:hover:bg-blue-900 cursor-pointer transition active:scale-95 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                                    onClick={handleMenuClose}
+                                  >
+                                    Edit
+                                  </button>
+                                </Link>
+                                <hr className="my-1" />
+                                <button
+                                  className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-100 dark:hover:bg-red-900 cursor-pointer transition active:scale-95 focus:outline-none focus:ring-2 focus:ring-red-400"
+                                  onClick={() => {
+                                    handleMenuClose();
+                                    handleDelete(order.id);
+                                  }}
+                                >
+                                  Delete
+                                </button>
+                              </div>
                             </div>
                           )}
                         </div>

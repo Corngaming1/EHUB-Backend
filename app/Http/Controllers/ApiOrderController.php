@@ -13,29 +13,45 @@ use Illuminate\Support\Str;
 
 class ApiOrderController extends Controller
 {
-    public function index()
-    {
-        $orders = Order::with('user')->get()->map(function ($order) {
-            return [
-                'id' => $order->id,
-                'grand_total' => $order->grand_total,
-                'payment_method' => $order->payment_method,
-                'payment_status' => $order->payment_status,
-                'status' => $order->status,
-                'currency' => $order->currency,
-                'shipping_amount' => $order->shipping_amount,
-                'shipping_method' => $order->shipping_method,
-                'notes' => $order->notes,
-                'phone' => $order->phone,
-                'location' => $order->location,
-                'user' => $order->user ? $order->user->only(['id', 'name']) : null,
-                'created_at' => $order->created_at,
-                'updated_at' => $order->updated_at,
-            ];
-        });
+public function index()
+{
+    $orders = Order::with(['user', 'items.product', 'voucherRequests.voucher'])->get()->map(function ($order) {
+        $voucherRequest = $order->voucherRequests()->where('status', 'approved')->latest()->first();
+        return [
+            'id' => $order->id,
+            'grand_total' => $order->grand_total,
+            'payment_method' => $order->payment_method,
+            'payment_status' => $order->payment_status,
+            'status' => $order->status,
+            'currency' => $order->currency,
+            'shipping_amount' => $order->shipping_amount,
+            'shipping_method' => $order->shipping_method,
+            'notes' => $order->notes,
+            'phone' => $order->phone,
+            'location' => $order->location,
+            'user' => $order->user ? $order->user->only(['id', 'name']) : null,
+            'items' => $order->items->map(function ($item) {
+                return [
+                    'id' => $item->id,
+                    'product_id' => $item->product_id,
+                    'quantity' => $item->quantity,
+                    'unit_amount' => $item->unit_amount,
+                    'product' => $item->product ? $item->product->only(['id', 'name']) : null,
+                ];
+            }),
+            'voucher' => $voucherRequest && $voucherRequest->voucher ? [
+                'code' => $voucherRequest->voucher->code,
+                'status' => $voucherRequest->status,
+                'discount_amount' => $voucherRequest->voucher->discount_amount,
+                'type' => $voucherRequest->voucher->type,
+            ] : null,
+            'created_at' => $order->created_at,
+            'updated_at' => $order->updated_at,
+        ];
+    });
 
-        return response()->json($orders);
-    }
+    return response()->json($orders);
+}
 
     public function store(Request $request)
     {
@@ -106,6 +122,19 @@ class ApiOrderController extends Controller
                 $product->quantity -= $item['quantity'];
                 $product->save();
             }
+
+             // --- Voucher request logic ---
+                if ($request->filled('voucher')) {
+                    $voucher = \App\Models\Voucher::where('code', $request->voucher)->first();
+                    if ($voucher) {
+                        \App\Models\VoucherRequest::create([
+                            'order_id' => $order->id,
+                            'user_id' => $user->id,
+                            'voucher_id' => $voucher->id,
+                            'status' => 'pending',
+                        ]);
+                    }
+                }
 
             DB::commit();
 

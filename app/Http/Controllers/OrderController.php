@@ -103,7 +103,33 @@ class OrderController extends Controller
                     'unit_amount' => $unitAmount,
                 ];
             }
+                $voucher = null;
+                if ($request->filled('voucher')) {
+                    $voucher = \App\Models\Voucher::where('code', $request->voucher)
+                        ->where('active', true)
+                        ->whereDate('expires_at', '>=', now())
+                        ->first();
 
+                    // Check if voucher exists and is unused
+                    if ($voucher) {
+                        $alreadyUsed = \App\Models\VoucherRequest::where('voucher_id', $voucher->id)
+                            ->where('status', 'approved')
+                            ->exists();
+
+                        if ($alreadyUsed) {
+                            return response()->json(['message' => 'Voucher code already used.'], 422);
+                        }
+
+                        // Apply discount
+                        if ($voucher->type === 'fixed') {
+                            $grandTotal = max(0, $grandTotal - $voucher->discount_amount);
+                        } elseif ($voucher->type === 'percent') {
+                            $grandTotal = max(0, $grandTotal * (1 - $voucher->discount_amount / 100));
+                        }
+                    } else {
+                        return response()->json(['message' => 'Invalid or expired voucher code.'], 422);
+                    }
+                }
             $order = Order::create([
                 'user_id' => $validatedOrder['user_id'],
                 'payment_method' => $validatedOrder['payment_method'],
@@ -117,6 +143,14 @@ class OrderController extends Controller
                 'location' => $validatedOrder['location'] ?? null,
                 'grand_total' => $grandTotal,
             ]);
+            if ($voucher) {
+            \App\Models\VoucherRequest::create([
+                'order_id' => $order->id,
+                'user_id' => $order->user_id,
+                'voucher_id' => $voucher->id,
+                'status' => 'approved', // Mark as approved since discount is applied instantly
+            ]);
+        }
 
             foreach ($itemDataList as $item) {
                 $order->items()->create([

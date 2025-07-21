@@ -189,6 +189,23 @@ export default function ProductsIndex() {
                   <span className="max-sm:sr-only">Add new Product</span>
                 </Button>
               </Link>
+               <Link href="/products/voucher">
+              <Button
+                variant="outline"
+                className="aspect-square max-sm:p-0 cursor-pointer bg-green-600 hover:bg-green-700 text-white transition active:scale-95 focus:outline-none focus:ring-2 focus:ring-green-400"
+              >
+                <PlusIcon className="opacity-60 sm:-ms-1" size={16} aria-hidden="true" />
+                <span className="max-sm:sr-only">Create Voucher</span>
+              </Button>
+            </Link>
+            <Link href="/products/voucher-list">
+            <Button
+              variant="outline"
+              className="aspect-square max-sm:p-0 cursor-pointer bg-yellow-600 hover:bg-yellow-700 text-white transition active:scale-95 focus:outline-none focus:ring-2 focus:ring-yellow-400"
+            >
+              <span className="max-sm:sr-only">View Vouchers</span>
+            </Button>
+          </Link>
             </div>
           </div>
 

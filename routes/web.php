@@ -42,6 +42,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::put('/orders/{order}/mark-completed', [OrderController::class, 'markAsCompleted'])->name('orders.markAsCompleted');
         Route::get('/orders/archived', [OrderController::class, 'archived'])->name('orders.archived');
         Route::patch('/orders/{order}/unarchive', [OrderController::class, 'unarchive'])->name('orders.unarchive');
+        Route::get('/products/voucher', function () {
+        return Inertia::render('products/voucher');
+        });
+         Route::get('/products/voucher-list', function () {
+        return Inertia::render('products/voucher-list');
+        });
         Route::resource('products', ProductController::class);
         Route::resource('brands', BrandController::class);
         Route::resource('categories', CategoryController::class);
