@@ -20,11 +20,5 @@ Route::apiResource('addresses', AddressController::class);
 Route::post('/admin/vouchers', [VoucherController::class, 'store']);
 Route::get('/admin/vouchers', [VoucherController::class, 'index']);
 Route::post('/validate-voucher', [VoucherController::class, 'validateVoucher']);
-
-
-
-Route::prefix('admin/voucher-requests')->group(function () {
-    Route::get('/', [AdminVoucherRequestController::class, 'index']);
-    Route::post('/{id}/approve', [AdminVoucherRequestController::class, 'approve']);
-    Route::post('/{id}/reject', [AdminVoucherRequestController::class, 'reject']);
-});
+Route::patch('/admin/vouchers/{id}', [VoucherController::class, 'updateStatus']);
+Route::delete('/admin/vouchers/{id}', [VoucherController::class, 'destroy']);

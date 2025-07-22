@@ -19,6 +19,8 @@ class Order extends Model
         'phone',       
         'location', 
         'archived', // New field added
+         'voucher_code', 
+         'address_id',
     ];
     
     protected $casts = [
@@ -49,5 +51,10 @@ class Order extends Model
 public function voucherRequests()
 {
     return $this->hasMany(\App\Models\VoucherRequest::class);
+}
+
+public function voucher()
+{
+    return $this->belongsTo(\App\Models\Voucher::class);
 }
 }

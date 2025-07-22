@@ -59,118 +59,72 @@ class OrderController extends Controller
         ]);
     }
 
-    public function store(Request $request)
-    {
-        DB::beginTransaction();
+   public function store(Request $request)
+{
+    $validated = $request->validate([
+        'email' => 'required|email',
+        'phone' => 'required|string',
+        'location' => 'required|string',
+        'deliveryOption' => 'required|string',
+        'items' => 'required|array',
+        'items.*.id' => 'required|integer|exists:products,id',
+        'items.*.quantity' => 'required|integer|min:1',
+        'voucher_code' => 'nullable|string',
+    ]);
 
-        try {
-            $validatedOrder = $request->validate([
-                'user_id' => 'required|exists:users,id',
-                'payment_method' => 'required|string|max:255',
-                'payment_status' => 'required|string|max:255',
-                'status' => 'required|in:new,processing,shipped,delivered,canceled',
-                'currency' => 'required|string|max:10',
-                'shipping_amount' => 'nullable|numeric',
-                'shipping_method' => 'nullable|string|max:255',
-                'notes' => 'nullable|string',
-                'phone' => 'nullable|string|max:255',
-                'location' => 'nullable|string|max:255',
-                'items' => 'required|array|min:1',
-                'items.*.product_id' => 'required|exists:products,id',
-                'items.*.quantity' => 'required|integer|min:1',
-            ]);
+    // Check if user exists or create one
+    $user = \App\Models\User::firstOrCreate(
+        ['email' => $validated['email']],
+        ['name' => 'Guest', 'password' => bcrypt('password')]
+    );
 
-            $grandTotal = 0;
-            $itemDataList = [];
+    // Create order
+    $order = \App\Models\Order::create([
+        'user_id' => $user->id,
+        'phone' => $validated['phone'],
+        'location' => $validated['location'],
+        'shipping_method' => $validated['deliveryOption'],
+        'payment_status' => 'pending',
+        'status' => 'pending',
+        'voucher_code' => $validated['voucher_code'] ?? null,
+    ]);
 
-            foreach ($validatedOrder['items'] as $itemData) {
-                $product = Product::findOrFail($itemData['product_id']);
+    $total = 0;
+    $orderItems = [];
 
-                if (!$product->is_active) {
-                    return response()->json(['message' => "Product {$product->name} is not active."], 422);
-                }
+    foreach ($validated['items'] as $item) {
+        $product = \App\Models\Product::findOrFail($item['id']);
 
-                if ($product->quantity < $itemData['quantity']) {
-                    return response()->json(['message' => "Only {$product->quantity} of {$product->name} available."], 422);
-                }
+        // Apply discount if on sale
+        $finalPrice = $product->on_sale
+            ? $product->price * (1 - ($product->discount_percentage / 100))
+            : $product->price;
 
-                $unitAmount = $product->price;
-                $grandTotal += $unitAmount * $itemData['quantity'];
+        $subtotal = $finalPrice * $item['quantity'];
+        $total += $subtotal;
 
-                $itemDataList[] = [
-                    'product' => $product,
-                    'quantity' => $itemData['quantity'],
-                    'unit_amount' => $unitAmount,
-                ];
-            }
-                $voucher = null;
-                if ($request->filled('voucher')) {
-                    $voucher = \App\Models\Voucher::where('code', $request->voucher)
-                        ->where('active', true)
-                        ->whereDate('expires_at', '>=', now())
-                        ->first();
-
-                    // Check if voucher exists and is unused
-                    if ($voucher) {
-                        $alreadyUsed = \App\Models\VoucherRequest::where('voucher_id', $voucher->id)
-                            ->where('status', 'approved')
-                            ->exists();
-
-                        if ($alreadyUsed) {
-                            return response()->json(['message' => 'Voucher code already used.'], 422);
-                        }
-
-                        // Apply discount
-                        if ($voucher->type === 'fixed') {
-                            $grandTotal = max(0, $grandTotal - $voucher->discount_amount);
-                        } elseif ($voucher->type === 'percent') {
-                            $grandTotal = max(0, $grandTotal * (1 - $voucher->discount_amount / 100));
-                        }
-                    } else {
-                        return response()->json(['message' => 'Invalid or expired voucher code.'], 422);
-                    }
-                }
-            $order = Order::create([
-                'user_id' => $validatedOrder['user_id'],
-                'payment_method' => $validatedOrder['payment_method'],
-                'payment_status' => $validatedOrder['payment_status'],
-                'status' => $validatedOrder['status'],
-                'currency' => $validatedOrder['currency'],
-                'shipping_amount' => $validatedOrder['shipping_amount'] ?? 0,
-                'shipping_method' => $validatedOrder['shipping_method'] ?? null,
-                'notes' => $validatedOrder['notes'] ?? null,
-                'phone' => $validatedOrder['phone'] ?? null,
-                'location' => $validatedOrder['location'] ?? null,
-                'grand_total' => $grandTotal,
-            ]);
-            if ($voucher) {
-            \App\Models\VoucherRequest::create([
-                'order_id' => $order->id,
-                'user_id' => $order->user_id,
-                'voucher_id' => $voucher->id,
-                'status' => 'approved', // Mark as approved since discount is applied instantly
-            ]);
-        }
-
-            foreach ($itemDataList as $item) {
-                $order->items()->create([
-                    'product_id' => $item['product']->id,
-                    'quantity' => $item['quantity'],
-                    'unit_amount' => $item['unit_amount'],
-                ]);
-
-                $item['product']->quantity -= $item['quantity'];
-                $item['product']->save();
-            }
-
-            DB::commit();
-
-            return response()->json(['message' => 'Order created successfully', 'order_id' => $order->id], 201);
-        } catch (\Exception $e) {
-            DB::rollBack();
-            return response()->json(['message' => 'Unexpected error', 'error' => $e->getMessage()], 500);
-        }
+        $orderItems[] = [
+            'product_id' => $product->id,
+            'quantity' => $item['quantity'],
+            'unit_amount' => $finalPrice, // ✅ fixed key here
+        ];
     }
+
+    // Create order items
+    foreach ($orderItems as $item) {
+        $order->items()->create($item);
+    }
+
+    // Update order total
+    $order->grand_total = $total;
+    $order->save();
+
+    return response()->json([
+        'success' => true,
+        'message' => 'Order placed successfully!',
+        'order_id' => $order->id,
+    ]);
+}
 
     public function show(Order $order)
     {
