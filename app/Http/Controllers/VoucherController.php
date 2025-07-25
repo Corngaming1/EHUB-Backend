@@ -36,24 +36,32 @@ class VoucherController extends Controller
 
 public function validateVoucher(Request $request)
 {
-    $request->validate([
-        'code' => 'required|string',
-    ]);
+    $code = $request->query('code'); // <-- explicitly get code from query string
 
-    $voucher = \App\Models\Voucher::where('code', $request->code)
+    if (!$code) {
+        return response()->json([
+            'valid' => false,
+            'message' => 'No voucher code provided.'
+        ], 400);
+    }
+
+    $voucher = Voucher::where('code', $code)
         ->where('active', true)
         ->where('expires_at', '>=', now())
+        ->where('used', 0)
         ->first();
 
     if (!$voucher) {
-        return response()->json(['message' => 'Invalid or expired voucher.'], 400);
+        return response()->json([
+            'valid' => false,
+            'message' => 'Invalid or expired voucher.'
+        ], 200);
     }
 
     return response()->json([
-        'voucher_id' => $voucher->id,
-        'code' => $voucher->code,
-        'type' => $voucher->type, // fixed or percent
+        'valid' => true,
         'discount_amount' => $voucher->discount_amount,
+        'type' => $voucher->type,
     ]);
 }
 public function updateStatus(Request $request, $id)

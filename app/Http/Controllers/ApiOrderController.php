@@ -191,9 +191,10 @@ $grandTotal = max(0, $calculatedTotal - $discount);
 
             // 5. Mark voucher as used
             if ($voucher) {
-                $voucher->used = true;
-                $voucher->save();
-            }
+            \Log::info("Marking voucher as used: " . $voucher->code);
+            $voucher->used = 1; // Set used to 1 (integer)
+            $voucher->save();
+             }
 
             DB::commit();
 

@@ -19,6 +19,7 @@ Route::apiResource('apiproducts', ApiProductController::class);
 Route::apiResource('addresses', AddressController::class);
 Route::post('/admin/vouchers', [VoucherController::class, 'store']);
 Route::get('/admin/vouchers', [VoucherController::class, 'index']);
+Route::get('/validate-voucher', [VoucherController::class, 'validateVoucher']);
 Route::post('/validate-voucher', [VoucherController::class, 'validateVoucher']);
 Route::patch('/admin/vouchers/{id}', [VoucherController::class, 'updateStatus']);
 Route::delete('/admin/vouchers/{id}', [VoucherController::class, 'destroy']);

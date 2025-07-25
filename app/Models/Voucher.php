@@ -12,6 +12,7 @@ class Voucher extends Model
         'type',
         'expires_at',
         'active',
+        'used',
     ];
 
     public function requests()
