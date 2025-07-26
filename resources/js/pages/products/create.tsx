@@ -312,15 +312,6 @@ export default function CreateProduct({ categories = [], brands = [] }: CreatePr
                       />
                       <span>Featured</span>
                     </label>
-
-                    <label className="flex items-center gap-2">
-                      <input
-                        type="checkbox"
-                        checked={data.on_sale}
-                        onChange={(e) => setData('on_sale', e.target.checked)}
-                      />
-                      <span>On Sale</span>
-                    </label>
                   </div>
 
                   <div className="col-span-2 mt-4">
