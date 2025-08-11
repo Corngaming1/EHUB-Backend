@@ -370,15 +370,21 @@ export default function EditProduct({
                           <span>Featured</span>
                         </label>
 
-                     <label className="flex items-center gap-2">
-                      <input
-                        type="checkbox"
-                        checked={data.on_sale}
-                        onChange={(e) => setData('on_sale', e.target.checked)}
-                      />
-                      <span>On Sale</span>
-                    </label>
-
+                    <label className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    checked={data.on_sale}
+                    onChange={(e) => {
+                      const checked = e.target.checked;
+                      setData('on_sale', checked);
+                      if (!checked) {
+                        // Clear discount when unchecked
+                        setData('discount_percentage', '');
+                      }
+                    }}
+                  />
+                  <span>On Sale</span>
+                </label>
                     {showDiscountInput && (
                       <div className="mt-2">
                         <Label htmlFor="discount_percentage">Discount %</Label>
