@@ -16,14 +16,15 @@ class ProductController extends Controller
         $query = Product::with(['category', 'brand'])
             ->orderBy('created_at', 'desc');
 
-    if ($request->has('search') && $request->search !== '') {
+   if ($request->has('search') && $request->search !== '') {
     $search = $request->search;
+
     $query->where(function ($q) use ($search) {
-        $q->where('name', 'like', "%$search%")
-          ->orWhere('description', 'like', "%$search%")
-          ->orWhere('sku','like', "%$search%");
+        $q->where('name', 'like', "%{$search}%")
+          ->orWhere('description', 'like', "%{$search}%")
+          ->orWhere('sku', $search); // exact match for SKU
     });
-    }   
+}
 
         $products = $query->paginate(20)
             ->through(function ($product) {
@@ -127,7 +128,7 @@ class ProductController extends Controller
                 'is_active' => $product->is_active,
                 'is_featured' => $product->is_featured,
                 'on_sale' => $product->on_sale,
-                'discount_percentage' => $product->discount_percentage, // ✅ THIS
+                'discount_percentage' => $product->discount_percentage, 
                 'created_at' => $product->created_at,
                 'updated_at' => $product->updated_at,
                 'quantity' => $product->quantity,

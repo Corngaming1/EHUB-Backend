@@ -15,7 +15,7 @@ interface Voucher {
 }
 
 export default function VoucherList() {
-  const [vouchers, setVouchers] = useState<Voucher[]>([]); // ✅ Correctly typed
+  const [vouchers, setVouchers] = useState<Voucher[]>([]); 
 
   useEffect(() => {
     axios.get("/api/admin/vouchers").then(res => setVouchers(res.data));
@@ -49,34 +49,36 @@ export default function VoucherList() {
               <th className="border px-2 py-1">Actions</th>
             </tr>
           </thead>
-          <tbody>
-            {vouchers.map((v) => (
-              <tr key={v.id}>
-                <td className="border px-2 py-1">{v.code}</td>
-                <td className="border px-2 py-1">{v.type}</td>
-                <td className="border px-2 py-1">{v.discount_amount}</td>
-                <td className="border px-2 py-1">{v.expires_at}</td>
-                <td className="border px-2 py-1">
-                  <select
-                    value={v.active ? "active" : "inactive"}
-                    onChange={() => toggleActive(v)}
-                    className="border px-1 py-0.5"
-                  >
-                    <option value="active">Active</option>
-                    <option value="inactive">Inactive</option>
-                  </select>
-                </td>
-                <td className="border px-2 py-1">
-                  <button
-                    onClick={() => handleDelete(v.id)}
-                    className="text-red-500 hover:underline"
-                  >
-                    Remove
-                  </button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
+        <tbody>
+        {vouchers
+          .filter(v => !v.used) // <-- Hide vouchers that are already used
+          .map((v) => (
+            <tr key={v.id}>
+              <td className="border px-2 py-1">{v.code}</td>
+              <td className="border px-2 py-1">{v.type}</td>
+              <td className="border px-2 py-1">{v.discount_amount}</td>
+              <td className="border px-2 py-1">{v.expires_at}</td>
+              <td className="border px-2 py-1">
+                <select
+                  value={v.active ? "active" : "inactive"}
+                  onChange={() => toggleActive(v)}
+                  className="border px-1 py-0.5"
+                >
+                  <option value="active">Active</option>
+                  <option value="inactive">Inactive</option>
+                </select>
+              </td>
+              <td className="border px-2 py-1">
+                <button
+                  onClick={() => handleDelete(v.id)}
+                  className="text-red-500 hover:underline"
+                >
+                  Remove
+                </button>
+              </td>
+            </tr>
+          ))}
+      </tbody>
         </table>
         <Link href="/products/voucher" className="block mt-4 text-blue-600 underline">Create New Voucher</Link>
       </div>
