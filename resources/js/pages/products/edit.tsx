@@ -108,38 +108,41 @@ export default function EditProduct({
     }
   }
 
-  function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    const formData = new FormData();
-    formData.append('_method', 'PUT');
-    formData.append('name', data.name);
-    formData.append('slug', data.slug);
-    formData.append('sku', data.sku);
-    formData.append('price', data.price);
-    formData.append('is_active', data.is_active ? '1' : '0');
-    formData.append('in_stock', data.in_stock ? '1' : '0');
-    formData.append('is_featured', data.is_featured ? '1' : '0');
-    formData.append('on_sale', data.on_sale ? '1' : '0');
-    formData.append(
-      'discount_percentage',
-      data.discount_percentage !== '' ? String(data.discount_percentage) : ''
-    );
-    formData.append('category_id', data.category_id ? String(data.category_id) : '');
-    formData.append('brand_id', data.brand_id ? String(data.brand_id) : '');
-    formData.append('quantity', data.quantity !== '' ? String(data.quantity) : '0');
-    formData.append('description', data.description || '');
- 
-    selectedImages.forEach((file, index) => {
-      formData.append(`images[${index}]`, file);
-    });
+    function handleSubmit(e: React.FormEvent) {
+      e.preventDefault();
+      const formData = new FormData();
+      formData.append('_method', 'PUT');
+      formData.append('name', data.name);
+      formData.append('slug', data.slug);
+      formData.append('sku', data.sku);
+      formData.append('price', data.price);
+      formData.append('is_active', data.is_active ? '1' : '0');
+      formData.append('in_stock', data.in_stock ? '1' : '0');
+      formData.append('is_featured', data.is_featured ? '1' : '0');
+      formData.append('on_sale', data.on_sale ? '1' : '0');
+      formData.append(
+        'discount_percentage',
+        data.discount_percentage !== '' ? String(data.discount_percentage) : ''
+      );
+      formData.append('category_id', data.category_id ? String(data.category_id) : '');
+      formData.append('brand_id', data.brand_id ? String(data.brand_id) : '');
 
-    Inertia.post(route('products.update', product.id), formData, {
-      forceFormData: true,
-      onSuccess: () => console.log('Update successful'),
-      onError: (errs) => console.log('Validation errors:', errs),
-    });
-  }
+      if (data.quantity !== '' && data.quantity !== undefined) {
+        formData.append('quantity', String(data.quantity));
+      }
 
+      formData.append('description', data.description || '');
+
+      selectedImages.forEach((file, index) => {
+        formData.append(`images[${index}]`, file);
+      });
+
+      Inertia.post(route('products.update', product.id), formData, {
+        forceFormData: true,
+        onSuccess: () => console.log('Update successful'),
+        onError: (errs) => console.log('Validation errors:', errs),
+      });
+    }
   return (
     <AppLayout breadcrumbs={breadcrumbs}>
       <Head title="Edit Product" />

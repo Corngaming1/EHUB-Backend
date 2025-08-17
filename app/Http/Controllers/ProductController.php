@@ -191,8 +191,7 @@ class ProductController extends Controller
         'quantity' => 'nullable|integer|min:0', // Make quantity optional
     ]);
 
-        // Don’t trust the quantity from frontend
-            unset($validated['quantity']);
+       
 
             $product->update($validated);
 
